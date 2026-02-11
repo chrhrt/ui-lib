@@ -484,7 +484,7 @@ function _G.UI:Window(Options)
             end
 
             Internal.PrevMouse1 = m1
-            wait(0.01)
+            wait(0.001)
         end
     end)
 
