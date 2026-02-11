@@ -1,6 +1,6 @@
 --[[
 ╔══════════════════════════════════════════════════════════════════════════════╗
-║                         MATCHA VERSION OF LUXWARE UI                         ║
+║                          ui library made by spook                            ║
 ║                           Full Documentation                                 ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 
@@ -275,6 +275,12 @@ local function KeyCodeToNumber(keyCode)
     return 70
 end
 
+-- Helper function: Calculate Y offset for vertically centered text
+-- Formula: (containerHeight - textSize) / 2
+local function centerY(containerY, containerH, textSize)
+    return containerY + math.floor((containerH - textSize) / 2)
+end
+
 _G.UI = {}
 _G.Flags = {
     Window = {},
@@ -312,7 +318,7 @@ function _G.UI:Window(Options)
     local tabH = 28
     local tabPad = 4
     local sectionHeaderH = 32
-    local elemH = 32
+    local elemH = 36
     local elemPad = 3
     local sectionPad = 5
     local dropItemH = 28
@@ -342,15 +348,23 @@ function _G.UI:Window(Options)
     local allDrawings = {}
     local allKeybindElems = {}
 
+    -- DARK BLUE COLOR SCHEME
     local C = {
         shadow = Color3.fromRGB(10, 10, 10),
         bg = Color3.fromRGB(30, 30, 30),
         side = Color3.fromRGB(21, 21, 21),
-        accent = Color3.fromRGB(50, 100, 150),  -- Darker blue for ALL enabled states
-        accentDim = Color3.fromRGB(35, 59, 55),
-        accentMid = Color3.fromRGB(103, 172, 161),
+        
+        -- Dark blue for enabled/active states
+        accent = Color3.fromRGB(70, 130, 180),
+        accentBright = Color3.fromRGB(100, 160, 210),
+        accentDark = Color3.fromRGB(50, 100, 150),
+        
+        -- Grey for disabled/inactive states
+        disabled = Color3.fromRGB(97, 97, 97),
+        disabledDark = Color3.fromRGB(60, 60, 60),
+        
         elemBg = Color3.fromRGB(18, 18, 18),
-        elemBgPress = Color3.fromRGB(101, 168, 157),
+        elemBgPress = Color3.fromRGB(70, 130, 180),
         textPrimary = Color3.fromRGB(255, 255, 255),
         textSecondary = Color3.fromRGB(180, 180, 180),
         textDim = Color3.fromRGB(97, 97, 97),
@@ -358,11 +372,11 @@ function _G.UI:Window(Options)
         sliderTrack = Color3.fromRGB(24, 24, 24),
         sectionBg = Color3.fromRGB(21, 21, 21),
         dropOptionBg = Color3.fromRGB(51, 51, 51),
-        dropOptionSel = Color3.fromRGB(28, 72, 120),
-        dropOptionText = Color3.fromRGB(120, 200, 187),
+        dropOptionSel = Color3.fromRGB(50, 100, 150),
+        dropOptionText = Color3.fromRGB(100, 160, 210),
         black = Color3.fromRGB(0, 0, 0),
         yellow = Color3.fromRGB(255, 255, 0),
-        green = Color3.fromRGB(0, 255, 0),
+        green = Color3.fromRGB(100, 200, 100),
     }
 
     local function makeSquare(p)
@@ -422,13 +436,16 @@ function _G.UI:Window(Options)
     local mainBg = makeSquare({Color=C.bg, ZIndex=1, Corner=5})
     local sideBg = makeSquare({Color=C.side, ZIndex=2, Corner=5})
     local sideCover = makeSquare({Color=C.side, ZIndex=2})
-    local divLine = makeLine({Color=C.accentDim, ZIndex=3, Thickness=1})
+    local divLine = makeLine({Color=C.accentDark, ZIndex=3, Thickness=1})
     local hubText = makeText({Text=libName, Color=C.accent, FontSize=14, Font=Drawing.Fonts.SystemBold, ZIndex=3})
-    local userText = makeText({Text=LocalPlayer.Name, Color=C.accentMid, FontSize=12, Font=Drawing.Fonts.SystemBold, ZIndex=3})
-    local togBtnW, togBtnH = 70, 20
+    local userText = makeText({Text=LocalPlayer.Name, Color=C.accentBright, FontSize=12, Font=Drawing.Fonts.SystemBold, ZIndex=3})
+    
+    -- Toggle button at bottom of sidebar
+    local togBtnW = 76
+    local togBtnH = 22
     local togBg = makeSquare({Color=C.inputBg, ZIndex=3, Corner=5})
-    local togTxt = makeText({Text="[ Alt ]", Color=C.accent, FontSize=11, Font=Drawing.Fonts.SystemBold, ZIndex=4, Center=true, Outline=true})
-    local togLbl = makeText({Text="Toggle", Color=C.textSecondary, FontSize=10, Font=Drawing.Fonts.SystemBold, ZIndex=3})
+    local togTxt = makeText({Text="Alt", Color=C.accent, FontSize=14, Font=Drawing.Fonts.SystemBold, ZIndex=4, Center=true, Outline=false})
+    local togLbl = makeText({Text="Toggle", Color=C.textSecondary, FontSize=13, Font=Drawing.Fonts.SystemBold, ZIndex=3, Center=false})
 
     local function getContentX() return Internal.Position.X + sideW + contentPadX end
     local function getContentY() return Internal.Position.Y + contentPadY end
@@ -471,31 +488,36 @@ function _G.UI:Window(Options)
         userText.Position = Vector2.new(wx+15, wy+32)
         userText.Visible = true
 
-        -- Fixed toggle button position
-        local kbX = wx + (sideW - togBtnW) / 2
-        local kbY = wy + windowH - togBtnH - 8
+        -- Toggle button position - 93.5% down the sidebar like original
+        local toggleYPercent = 0.935
+        local kbX = wx + 8
+        local kbY = wy + math.floor(windowH * toggleYPercent) - togBtnH
+        
         togBg.Position = Vector2.new(kbX, kbY)
         togBg.Size = Vector2.new(togBtnW, togBtnH)
         togBg.Visible = true
 
         if Internal.ListeningToggleKey then
-            togTxt.Text = "..."
-            togTxt.Color = C.yellow
+            togTxt.Text = ". . ."
+            togTxt.Color = C.accent
         else
-            togTxt.Text = "[ "..Internal.ToggleKeyName.." ]"
+            togTxt.Text = Internal.ToggleKeyName
             togTxt.Color = C.accent
         end
-        togTxt.Position = Vector2.new(kbX + togBtnW/2, kbY + togBtnH/2 - 6)
+        -- Center text in button using Matcha formula: (containerH - textSize) / 2
+        -- togTxt is size 14, togBtnH is 22: (22-14)/2 = 4
+        togTxt.Position = Vector2.new(kbX + togBtnW/2, kbY + 10)
         togTxt.Visible = true
 
-        togLbl.Position = Vector2.new(wx + sideW/2, kbY + togBtnH + 2)
-        togLbl.Center = true
+        -- "Toggle" label to the right of button
+        -- togLbl is size 13, togBtnH is 22: (22-13)/2 = 4.5 -> 4
+        togLbl.Position = Vector2.new(kbX + togBtnW + 8, kbY + math.floor((togBtnH - 13) / 2))
         togLbl.Visible = true
 
         local tabY = wy + 70
         for _, tab in ipairs(tabs) do
             tab.btnDraw.Position = Vector2.new(wx+15, tabY)
-            tab.btnDraw.Color = (Internal.ActiveTab == tab) and C.accent or C.accentDim
+            tab.btnDraw.Color = (Internal.ActiveTab == tab) and C.accent or C.disabled
             tab.btnDraw.Visible = true
             tab.btnY = tabY
             tabY = tabY + tabH + tabPad
@@ -542,11 +564,13 @@ function _G.UI:Window(Options)
                 sec.hdrBg.Size = Vector2.new(cw, sectionHeaderH)
                 sec.hdrBg.Visible = hdrVis
 
-                sec.hdrTxt.Position = Vector2.new(cx+10, cy+sectionHeaderH/2-7)
+                -- Section header text: size 14, height 32: (32-14)/2 = 9
+                sec.hdrTxt.Position = Vector2.new(cx+10, cy + math.floor((sectionHeaderH - 14) / 2))
                 sec.hdrTxt.Visible = hdrVis
 
+                -- Section arrow: size 14, height 32: (32-14)/2 = 9
                 sec.arrow.Text = sec.open and "v" or ">"
-                sec.arrow.Position = Vector2.new(cx+cw-20, cy+sectionHeaderH/2-7)
+                sec.arrow.Position = Vector2.new(cx+cw-20, cy + math.floor((sectionHeaderH - 14) / 2))
                 sec.arrow.Visible = hdrVis
 
                 sec.posY = cy
@@ -603,13 +627,13 @@ function _G.UI:Window(Options)
                         end
                     elseif vk >= 32 and vk <= 126 then
                         local char = string.char(vk)
-                        if not iskeypressed(0x10) then -- Not shift
+                        if not iskeypressed(0x10) then
                             char = char:lower()
                         end
                         if #tb.value < 50 then
                             tb.value = tb.value .. char
                         end
-                    elseif vk == 32 then -- Space
+                    elseif vk == 32 then
                         if #tb.value < 50 then
                             tb.value = tb.value .. " "
                         end
@@ -682,7 +706,6 @@ function _G.UI:Window(Options)
                         local oy = dd.lastY + elemH + elemPad
                         
                         if dd.multi then
-                            -- Multi dropdown
                             for i = 1, #dd.options do
                                 if isMouseInRect(dd.lastX, oy, dd.lastW, dropItemH) then
                                     local opt = dd.options[i]
@@ -705,7 +728,6 @@ function _G.UI:Window(Options)
                                 oy = oy + dropItemH + elemPad
                             end
                         else
-                            -- Single dropdown
                             for i = 1, #dd.options do
                                 if isMouseInRect(dd.lastX, oy, dd.lastW, dropItemH) then
                                     dd.selected = dd.options[i]
@@ -722,8 +744,11 @@ function _G.UI:Window(Options)
                     end
 
                     if not handled then
-                        local kbX = wx + (sideW - togBtnW) / 2
-                        local kbY = wy + windowH - togBtnH - 8
+                        -- Check toggle button click
+                        local toggleYPercent = 0.935
+                        local kbX = wx + 8
+                        local kbY = wy + math.floor(windowH * toggleYPercent) - togBtnH
+                        
                         if isMouseInRect(kbX, kbY, togBtnW, togBtnH) then
                             Internal.ListeningToggleKey = true
                             handled = true
@@ -804,7 +829,7 @@ function _G.UI:Window(Options)
                 Update()
                 Internal.NeedsUpdate = false
             end
-            task.wait(0.001) -- ~60 FPS
+            task.wait(0.001)
         end
 
         for _, d in ipairs(allDrawings) do
@@ -874,7 +899,8 @@ function _G.UI:Window(Options)
                         bg.Position = Vector2.new(x+8, y)
                         bg.Size = Vector2.new(w-16, h)
                         bg.Visible = vis
-                        tx.Position = Vector2.new(x+8+(w-16)/2, y+h/2-7)
+                        -- Label text: size 14, height 36: (36-14)/2 = 11
+                        tx.Position = Vector2.new(x+8+(w-16)/2, y + math.floor((h - 14) / 2))
                         tx.Visible = vis
                     end,
                     onClick = function() return false end,
@@ -911,7 +937,8 @@ function _G.UI:Window(Options)
                         bg.Position = Vector2.new(x+8, y)
                         bg.Size = Vector2.new(w-16, h)
                         bg.Visible = vis
-                        tx.Position = Vector2.new(x+8+(w-16)/2, y+h/2-7)
+                        -- Button text: size 14, height 36: (36-14)/2 = 11
+                        tx.Position = Vector2.new(x+8+(w-16)/2, y + math.floor((h - 14) / 2))
                         tx.Visible = vis
                     end,
                     onClick = function()
@@ -937,8 +964,8 @@ function _G.UI:Window(Options)
                 
                 local bg = makeSquare({Color=C.elemBg, ZIndex=4, Corner=3})
                 local ckBg = makeSquare({Color=C.inputBg, ZIndex=5, Corner=3})
-                local ck = makeText({Text="X", Color=defaultState and C.accent or C.textDim, FontSize=16, Font=Drawing.Fonts.SystemBold, ZIndex=6, Center=true})
-                local lb = makeText({Text=text, Color=defaultState and C.accent or C.textDim, FontSize=14, Font=Drawing.Fonts.SystemBold, ZIndex=5})
+                local ck = makeText({Text="X", Color=defaultState and C.accent or C.disabled, FontSize=16, Font=Drawing.Fonts.SystemBold, ZIndex=6, Center=true})
+                local lb = makeText({Text=text, Color=defaultState and C.accent or C.disabled, FontSize=14, Font=Drawing.Fonts.SystemBold, ZIndex=5})
                 
                 local state = { on = defaultState }
                 
@@ -957,21 +984,30 @@ function _G.UI:Window(Options)
                         bg.Position = Vector2.new(x+8, y)
                         bg.Size = Vector2.new(w-16, h)
                         bg.Visible = vis
-                        ckBg.Position = Vector2.new(x+16, y+4)
-                        ckBg.Size = Vector2.new(24, 24)
+                        
+                        local ckSize = 25
+                        local ckX = x + 16
+                        local ckY = y + math.floor((h - ckSize) / 2)
+                        
+                        ckBg.Position = Vector2.new(ckX, ckY)
+                        ckBg.Size = Vector2.new(ckSize, ckSize)
                         ckBg.Visible = vis
-                        ck.Position = Vector2.new(x+16+12, y+h/2-8)
+                        
+                        -- X text: size 16, checkbox 25: (25-16)/2 = 4.5 -> 4
+                        ck.Position = Vector2.new(ckX + ckSize/2, ckY + 10)
                         ck.Visible = vis
-                        lb.Position = Vector2.new(x+48, y+h/2-7)
+                        
+                        -- Label: size 14, height 36: (36-14)/2 = 11
+                        lb.Position = Vector2.new(ckX + ckSize + 10, y + math.floor((h - 14) / 2))
                         lb.Visible = vis
-                        -- Always show X, just change color
+                        
                         ck.Text = "X"
                         if state.on then
                             ck.Color = C.accent
                             lb.Color = C.accent
                         else
-                            ck.Color = C.textDim
-                            lb.Color = C.textDim
+                            ck.Color = C.disabled
+                            lb.Color = C.disabled
                         end
                     end,
                     onClick = function()
@@ -1016,6 +1052,7 @@ function _G.UI:Window(Options)
                 local valTxt = makeText({Text=tostring(defaultVal)..suffix, Color=C.accent, FontSize=12, Font=Drawing.Fonts.SystemBold, ZIndex=5})
                 
                 local trackW = 150
+                local trackH = 6
                 local slider = {
                     value = defaultVal,
                     min = min,
@@ -1043,23 +1080,25 @@ function _G.UI:Window(Options)
                         bg.Visible = vis
                         
                         local sx = x + 16
-                        local sy = y + h/2 - 3
+                        local sy = y + math.floor((h - trackH) / 2)
                         slider.trackX = sx
                         
                         trackBg.Position = Vector2.new(sx, sy)
-                        trackBg.Size = Vector2.new(trackW, 6)
+                        trackBg.Size = Vector2.new(trackW, trackH)
                         trackBg.Visible = vis
                         
                         local pct = (max > min) and math.clamp((slider.value - min) / (max - min), 0, 1) or 0
                         fill.Position = Vector2.new(sx, sy)
-                        fill.Size = Vector2.new(math.max(math.floor(trackW * pct), 1), 6)
+                        fill.Size = Vector2.new(math.max(math.floor(trackW * pct), 1), trackH)
                         fill.Visible = vis
                         
-                        lb.Position = Vector2.new(sx + trackW + 12, y + h/2 - 7)
+                        -- Label: size 14, height 36: (36-14)/2 = 11
+                        lb.Position = Vector2.new(sx + trackW + 12, y + math.floor((h - 14) / 2))
                         lb.Visible = vis
                         
+                        -- Value text: size 12, height 36: (36-12)/2 = 12
                         valTxt.Text = tostring(slider.value)..suffix
-                        valTxt.Position = Vector2.new(sx + trackW + 12 + estW(text, 14) + 8, y + h/2 - 6)
+                        valTxt.Position = Vector2.new(sx + trackW + 12 + estW(text, 14) + 8, y + math.floor((h - 12) / 2))
                         valTxt.Visible = vis
                     end,
                     onClick = function()
@@ -1165,11 +1204,13 @@ function _G.UI:Window(Options)
                         hdrBg.Visible = vis
                         
                         hdrTx.Text = title..": "..dropState.selected
-                        hdrTx.Position = Vector2.new(x+18, y+elemH/2-7)
+                        -- Header text: size 14, height 36: (36-14)/2 = 11
+                        hdrTx.Position = Vector2.new(x+18, y + math.floor((elemH - 14) / 2))
                         hdrTx.Visible = vis
                         
+                        -- Arrow: size 12, height 36: (36-12)/2 = 12
                         hdrArr.Text = dropState.isOpen and "^" or "v"
-                        hdrArr.Position = Vector2.new(x+w-28, y+elemH/2-6)
+                        hdrArr.Position = Vector2.new(x+w-28, y + math.floor((elemH - 12) / 2))
                         hdrArr.Visible = vis
                         
                         if dropState.isOpen and vis then
@@ -1186,7 +1227,8 @@ function _G.UI:Window(Options)
                                 end
                                 
                                 optionDrawings[i].txt.Text = options[i]
-                                optionDrawings[i].txt.Position = Vector2.new(x+20, oy + dropItemH/2 - 7)
+                                -- Option text: size 14, height 28: (28-14)/2 = 7
+                                optionDrawings[i].txt.Position = Vector2.new(x+20, oy + math.floor((dropItemH - 14) / 2))
                                 optionDrawings[i].txt.Visible = true
                                 
                                 oy = oy + dropItemH + elemPad
@@ -1320,11 +1362,13 @@ function _G.UI:Window(Options)
                         hdrBg.Visible = vis
                         
                         hdrTx.Text = title..": "..#dropState.selected.." selected"
-                        hdrTx.Position = Vector2.new(x+18, y+elemH/2-7)
+                        -- Header text: size 14, height 36: (36-14)/2 = 11
+                        hdrTx.Position = Vector2.new(x+18, y + math.floor((elemH - 14) / 2))
                         hdrTx.Visible = vis
                         
+                        -- Arrow: size 12, height 36: (36-12)/2 = 12
                         hdrArr.Text = dropState.isOpen and "^" or "v"
-                        hdrArr.Position = Vector2.new(x+w-28, y+elemH/2-6)
+                        hdrArr.Position = Vector2.new(x+w-28, y + math.floor((elemH - 12) / 2))
                         hdrArr.Visible = vis
                         
                         if dropState.isOpen and vis then
@@ -1342,11 +1386,13 @@ function _G.UI:Window(Options)
                                 end
                                 
                                 optionDrawings[i].txt.Text = options[i]
-                                optionDrawings[i].txt.Position = Vector2.new(x+20, oy + dropItemH/2 - 7)
+                                -- Option text: size 14, height 28: (28-14)/2 = 7
+                                optionDrawings[i].txt.Position = Vector2.new(x+20, oy + math.floor((dropItemH - 14) / 2))
                                 optionDrawings[i].txt.Visible = true
                                 
                                 if isSelected then
-                                    optionDrawings[i].check.Position = Vector2.new(x+w-35, oy + dropItemH/2 - 8)
+                                    -- Checkmark: size 16, height 28: (28-16)/2 = 6
+                                    optionDrawings[i].check.Position = Vector2.new(x+w-35, oy + math.floor((dropItemH - 16) / 2))
                                     optionDrawings[i].check.Visible = true
                                 else
                                     optionDrawings[i].check.Visible = false
@@ -1434,9 +1480,10 @@ function _G.UI:Window(Options)
                 local keyName = KeyNames[keyCode] or "F"
                 
                 local bg = makeSquare({Color=C.elemBg, ZIndex=4, Corner=3})
-                local kW, kH = 85, 24
+                local kW = 100
+                local kH = 22
                 local kBg = makeSquare({Color=C.inputBg, ZIndex=5, Corner=5})
-                local kTx = makeText({Text="[ "..keyName.." ]", Color=C.accent, FontSize=13, Font=Drawing.Fonts.SystemBold, ZIndex=6, Center=true, Outline=true})
+                local kTx = makeText({Text=keyName, Color=C.accent, FontSize=14, Font=Drawing.Fonts.SystemBold, ZIndex=6, Center=true, Outline=false})
                 local lb = makeText({Text=text, Color=C.textPrimary, FontSize=13, Font=Drawing.Fonts.SystemBold, ZIndex=5})
                 
                 local keybind = {
@@ -1447,9 +1494,6 @@ function _G.UI:Window(Options)
                     listening = false,
                 }
                 table.insert(allKeybindElems, keybind)
-                
-                local keybindBtnX = 0
-                local keybindBtnY = 0
 
                 local elem = {
                     posY = 0, posX = 0, width = 0,
@@ -1465,26 +1509,26 @@ function _G.UI:Window(Options)
                         bg.Size = Vector2.new(w-16, h)
                         bg.Visible = vis
                         
-                        local bx = x+16
-                        local by = y+(h-kH)/2
-                        keybindBtnX = bx
-                        keybindBtnY = by
+                        local bx = x + 16
+                        local by = y + math.floor((h - kH) / 2)
                         
                         kBg.Position = Vector2.new(bx, by)
                         kBg.Size = Vector2.new(kW, kH)
                         kBg.Visible = vis
                         
                         if keybind.listening then
-                            kTx.Text = "..."
-                            kTx.Color = C.yellow
+                            kTx.Text = ". . ."
+                            kTx.Color = C.accent
                         else
-                            kTx.Text = "[ "..keybind.keyName.." ]"
+                            kTx.Text = keybind.keyName
                             kTx.Color = C.accent
                         end
-                        kTx.Position = Vector2.new(bx+kW/2, by+kH/2-7)
+                        -- Keybind button text: size 14, button height 22: (22-14)/2 = 4
+                        kTx.Position = Vector2.new(bx + kW/2, by + 10)
                         kTx.Visible = vis
                         
-                        lb.Position = Vector2.new(bx+kW+10, y+h/2-7)
+                        -- Label: size 13, height 36: (36-13)/2 = 11.5 -> 11
+                        lb.Position = Vector2.new(bx + kW + 10, y + math.floor((h - 13) / 2))
                         lb.Visible = vis
                     end,
                     onClick = function()
@@ -1505,8 +1549,10 @@ function _G.UI:Window(Options)
                 local cb = Callback or function() end
                 
                 local bg = makeSquare({Color=C.elemBg, ZIndex=4, Corner=3})
-                local inputBg = makeSquare({Color=C.inputBg, ZIndex=5, Corner=3})
-                local inputTxt = makeText({Text=defaultValue ~= "" and defaultValue or placeholder, Color=defaultValue ~= "" and C.textPrimary or C.textDim, FontSize=13, Font=Drawing.Fonts.System, ZIndex=6})
+                local inputW = 100
+                local inputH = 22
+                local inputBg = makeSquare({Color=C.inputBg, ZIndex=5, Corner=5})
+                local inputTxt = makeText({Text=defaultValue ~= "" and defaultValue or placeholder, Color=defaultValue ~= "" and C.textPrimary or C.disabled, FontSize=13, Font=Drawing.Fonts.System, ZIndex=6})
                 local lb = makeText({Text=text, Color=C.textPrimary, FontSize=13, Font=Drawing.Fonts.SystemBold, ZIndex=5})
                 local cursor = makeText({Text="|", Color=C.accent, FontSize=13, Font=Drawing.Fonts.System, ZIndex=7})
                 
@@ -1535,31 +1581,33 @@ function _G.UI:Window(Options)
                         bg.Size = Vector2.new(w-16, h)
                         bg.Visible = vis
                         
-                        local inputW = 200
                         local inputX = x + 16
-                        local inputY = y + (h - 22) / 2
+                        local inputY = y + math.floor((h - inputH) / 2)
                         
                         inputBg.Position = Vector2.new(inputX, inputY)
-                        inputBg.Size = Vector2.new(inputW, 22)
+                        inputBg.Size = Vector2.new(inputW, inputH)
                         inputBg.Visible = vis
                         
                         if textbox.value == "" then
                             inputTxt.Text = placeholder
-                            inputTxt.Color = C.textDim
+                            inputTxt.Color = C.disabled
                         else
                             inputTxt.Text = textbox.value
                             inputTxt.Color = C.textPrimary
                         end
-                        inputTxt.Position = Vector2.new(inputX + 6, inputY + 4)
+                        -- Input text: size 13, input height 22: (22-13)/2 = 4.5 -> 4
+                        inputTxt.Position = Vector2.new(inputX + 6, inputY + math.floor((inputH - 13) / 2))
                         inputTxt.Visible = vis
                         
-                        lb.Position = Vector2.new(inputX + inputW + 10, y + h/2 - 7)
+                        -- Label: size 13, height 36: (36-13)/2 = 11.5 -> 11
+                        lb.Position = Vector2.new(inputX + inputW + 10, y + math.floor((h - 13) / 2))
                         lb.Visible = vis
                         
                         if textbox.focused then
                             cursorBlink = cursorBlink + 1
                             if cursorBlink % 30 < 15 then
-                                cursor.Position = Vector2.new(inputX + 6 + estW(textbox.value, 13), inputY + 4)
+                                -- Cursor: size 13, input height 22: (22-13)/2 = 4.5 -> 4
+                                cursor.Position = Vector2.new(inputX + 6 + estW(textbox.value, 13), inputY + math.floor((inputH - 13) / 2))
                                 cursor.Visible = vis
                             else
                                 cursor.Visible = false
@@ -1618,4 +1666,3 @@ function _G.UI:Window(Options)
     return WindowAPI
 end
 
-notify("UI Library Loaded!", "Success", 2)
