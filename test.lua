@@ -483,7 +483,7 @@ function _G.UI:Window(Options)
             togTxt.Text = "[ "..Internal.ToggleKeyName.." ]"
             togTxt.Color = C.accent
         end
-        togTxt.Position = Vector2.new(kbX+togBtnW/2, kbY+togBtnH/2-7)
+        togTxt.Position = Vector2.new(kbX+togBtnW/2, kbY+5)
         togTxt.Visible = true
 
         togLbl.Position = Vector2.new(kbX+togBtnW+6, kbY+togBtnH/2-6)
