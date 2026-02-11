@@ -807,7 +807,7 @@ function _G.UI:Window(Options)
                 Update()
                 Internal.NeedsUpdate = false
             end
-            task.wait(0.016) -- ~60 FPS
+            task.wait(0.001) -- ~60 FPS
         end
 
         for _, d in ipairs(allDrawings) do
