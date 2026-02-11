@@ -1,4 +1,4 @@
--- Matcha-compatible Luxt1 UI Library
+-- Matcha-compatible Luxt1 UI Library - Fixed
 local KeyNames = {
     [8]="Backspace",[9]="Tab",[13]="Enter",[16]="Shift",[17]="Ctrl",
     [18]="Alt",[19]="Pause",[20]="CapsLock",[27]="Esc",[32]="Space",
@@ -17,43 +17,16 @@ local KeyNames = {
     [122]="F11",[123]="F12",
 }
 
-local vkToChar = {
-    [65]="a",[66]="b",[67]="c",[68]="d",[69]="e",[70]="f",
-    [71]="g",[72]="h",[73]="i",[74]="j",[75]="k",[76]="l",
-    [77]="m",[78]="n",[79]="o",[80]="p",[81]="q",[82]="r",
-    [83]="s",[84]="t",[85]="u",[86]="v",[87]="w",[88]="x",
-    [89]="y",[90]="z",
-    [48]="0",[49]="1",[50]="2",[51]="3",[52]="4",
-    [53]="5",[54]="6",[55]="7",[56]="8",[57]="9",
-    [32]=" ",[190]=".",[188]=",",[189]="-",[187]="=",
-}
-
-local vkToCharShift = {
-    [65]="A",[66]="B",[67]="C",[68]="D",[69]="E",[70]="F",
-    [71]="G",[72]="H",[73]="I",[74]="J",[75]="K",[76]="L",
-    [77]="M",[78]="N",[79]="O",[80]="P",[81]="Q",[82]="R",
-    [83]="S",[84]="T",[85]="U",[86]="V",[87]="W",[88]="X",
-    [89]="Y",[90]="Z",
-    [49]="!",[50]="@",[51]="#",[52]="$",[53]="%",
-    [54]="^",[55]="&",[56]="*",[57]="(",[48]=")",
-    [189]="_",[187]="+",
-}
-
--- Helper to convert Enum.KeyCode to number
 local function KeyCodeToNumber(keyCode)
     if type(keyCode) == "number" then
         return keyCode
     end
-    -- Try to extract the number value from the enum
-    for name, num in pairs(Enum.KeyCode:GetEnumItems()) do
-        if num == keyCode then
-            return num.Value
-        end
+    if typeof(keyCode) == "EnumItem" then
+        return keyCode.Value
     end
-    return 70 -- Default F key
+    return 70
 end
 
--- Create global tables
 _G.UI = {}
 _G.Flags = {
     Window = {},
@@ -103,7 +76,6 @@ function _G.UI:Window(Options)
         Position = Vector2.new(300, 100),
         ActiveTab = nil,
         ActiveSlider = nil,
-        FocusedTextBox = nil,
         ListeningKeybind = nil,
         ListeningToggleKey = false,
         ToggleKeyCode = 0x12,
@@ -193,11 +165,6 @@ function _G.UI:Window(Options)
         return #text * (fs * 0.52)
     end
 
-    local function shiftHeld()
-        local ok, p = pcall(iskeypressed, 0x10)
-        return ok and p
-    end
-
     -- Window chrome
     local shadowBg = makeSquare({Color=C.shadow, ZIndex=0, Corner=7, Transparency=0.3})
     local mainBg = makeSquare({Color=C.bg, ZIndex=1, Corner=5})
@@ -264,7 +231,7 @@ function _G.UI:Window(Options)
             togTxt.Text = "[ "..Internal.ToggleKeyName.." ]"
             togTxt.Color = C.accent
         end
-        togTxt.Position = Vector2.new(kbX+togBtnW/2, kbY+togBtnH/2-7)
+        togTxt.Position = Vector2.new(kbX+togBtnW/2, kbY+5)
         togTxt.Visible = true
 
         togLbl.Position = Vector2.new(kbX+togBtnW+6, kbY+togBtnH/2-6)
@@ -813,26 +780,26 @@ function _G.UI:Window(Options)
                 
                 local optionDrawings = {}
                 for i = 1, #options do
-                    local bg = Drawing.new("Square")
-                    bg.Filled = true
-                    bg.Color = C.dropOptionBg
-                    bg.Size = Vector2.new(100, dropItemH)
-                    bg.Visible = false
-                    bg.ZIndex = 100
-                    bg.Corner = 3
-                    table.insert(allDrawings, bg)
+                    local optBg = Drawing.new("Square")
+                    optBg.Filled = true
+                    optBg.Color = C.dropOptionBg
+                    optBg.Size = Vector2.new(100, dropItemH)
+                    optBg.Visible = false
+                    optBg.ZIndex = 100
+                    optBg.Corner = 3
+                    table.insert(allDrawings, optBg)
                     
-                    local txt = Drawing.new("Text")
-                    txt.Text = options[i]
-                    txt.Color = C.dropOptionText
-                    txt.Size = 14
-                    txt.Font = Drawing.Fonts.SystemBold
-                    txt.Visible = false
-                    txt.ZIndex = 101
-                    txt.Outline = true
-                    table.insert(allDrawings, txt)
+                    local optTxt = Drawing.new("Text")
+                    optTxt.Text = options[i]
+                    optTxt.Color = C.dropOptionText
+                    optTxt.Size = 14
+                    optTxt.Font = Drawing.Fonts.SystemBold
+                    optTxt.Visible = false
+                    optTxt.ZIndex = 101
+                    optTxt.Outline = true
+                    table.insert(allDrawings, optTxt)
                     
-                    optionDrawings[i] = {bg = bg, txt = txt}
+                    optionDrawings[i] = {bg = optBg, txt = optTxt}
                 end
                 
                 local dropState = {
@@ -964,10 +931,12 @@ function _G.UI:Window(Options)
                     listening = false,
                 }
                 table.insert(allKeybindElems, keybind)
+                
+                local keybindBtnX = 0
+                local keybindBtnY = 0
 
                 local elem = {
                     posY = 0, posX = 0, width = 0,
-                    btnX = 0, btnY = 0,
                     getHeight = function() return elemH end,
                     hide = function()
                         bg.Visible = false
@@ -980,9 +949,10 @@ function _G.UI:Window(Options)
                         bg.Size = Vector2.new(w-16, h)
                         bg.Visible = vis
                         
-                        local bx, by = x+16, y+(h-kH)/2
-                        elem.btnX = bx
-                        elem.btnY = by
+                        local bx = x+16
+                        local by = y+(h-kH)/2
+                        keybindBtnX = bx
+                        keybindBtnY = by
                         
                         kBg.Position = Vector2.new(bx, by)
                         kBg.Size = Vector2.new(kW, kH)
@@ -995,7 +965,7 @@ function _G.UI:Window(Options)
                             kTx.Text = "[ "..keybind.keyName.." ]"
                             kTx.Color = C.accent
                         end
-                        kTx.Position = Vector2.new(bx+kW/2, by+kH/2-7)
+                        kTx.Position = Vector2.new(bx+kW/2, by+5)
                         kTx.Visible = vis
                         
                         lb.Position = Vector2.new(bx+kW+10, y+h/2-7)
