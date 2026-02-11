@@ -346,10 +346,9 @@ function _G.UI:Window(Options)
         shadow = Color3.fromRGB(10, 10, 10),
         bg = Color3.fromRGB(30, 30, 30),
         side = Color3.fromRGB(21, 21, 21),
-        accent = Color3.fromRGB(153, 255, 238),
+        accent = Color3.fromRGB(50, 100, 150),  -- Darker blue for ALL enabled states
         accentDim = Color3.fromRGB(35, 59, 55),
         accentMid = Color3.fromRGB(103, 172, 161),
-        checkboxOn = Color3.fromRGB(70, 130, 180),  -- Dark-ish blue for enabled checkbox
         elemBg = Color3.fromRGB(18, 18, 18),
         elemBgPress = Color3.fromRGB(101, 168, 157),
         textPrimary = Color3.fromRGB(255, 255, 255),
@@ -426,10 +425,10 @@ function _G.UI:Window(Options)
     local divLine = makeLine({Color=C.accentDim, ZIndex=3, Thickness=1})
     local hubText = makeText({Text=libName, Color=C.accent, FontSize=14, Font=Drawing.Fonts.SystemBold, ZIndex=3})
     local userText = makeText({Text=LocalPlayer.Name, Color=C.accentMid, FontSize=12, Font=Drawing.Fonts.SystemBold, ZIndex=3})
-    local togBtnW, togBtnH = 75, 22
+    local togBtnW, togBtnH = 70, 20
     local togBg = makeSquare({Color=C.inputBg, ZIndex=3, Corner=5})
-    local togTxt = makeText({Text="[ Alt ]", Color=C.accent, FontSize=12, Font=Drawing.Fonts.SystemBold, ZIndex=4, Center=true, Outline=true})
-    local togLbl = makeText({Text="Toggle", Color=C.textSecondary, FontSize=11, Font=Drawing.Fonts.SystemBold, ZIndex=3})
+    local togTxt = makeText({Text="[ Alt ]", Color=C.accent, FontSize=11, Font=Drawing.Fonts.SystemBold, ZIndex=4, Center=true, Outline=true})
+    local togLbl = makeText({Text="Toggle", Color=C.textSecondary, FontSize=10, Font=Drawing.Fonts.SystemBold, ZIndex=3})
 
     local function getContentX() return Internal.Position.X + sideW + contentPadX end
     local function getContentY() return Internal.Position.Y + contentPadY end
@@ -472,7 +471,9 @@ function _G.UI:Window(Options)
         userText.Position = Vector2.new(wx+15, wy+32)
         userText.Visible = true
 
-        local kbX, kbY = wx+10, wy+windowH-32
+        -- Fixed toggle button position
+        local kbX = wx + (sideW - togBtnW) / 2
+        local kbY = wy + windowH - togBtnH - 8
         togBg.Position = Vector2.new(kbX, kbY)
         togBg.Size = Vector2.new(togBtnW, togBtnH)
         togBg.Visible = true
@@ -484,10 +485,11 @@ function _G.UI:Window(Options)
             togTxt.Text = "[ "..Internal.ToggleKeyName.." ]"
             togTxt.Color = C.accent
         end
-        togTxt.Position = Vector2.new(kbX+togBtnW/2, kbY+4)
+        togTxt.Position = Vector2.new(kbX + togBtnW/2, kbY + togBtnH/2 - 6)
         togTxt.Visible = true
 
-        togLbl.Position = Vector2.new(kbX+togBtnW+5, kbY+5)
+        togLbl.Position = Vector2.new(wx + sideW/2, kbY + togBtnH + 2)
+        togLbl.Center = true
         togLbl.Visible = true
 
         local tabY = wy + 70
@@ -720,7 +722,8 @@ function _G.UI:Window(Options)
                     end
 
                     if not handled then
-                        local kbX, kbY = wx+10, wy+windowH-32
+                        local kbX = wx + (sideW - togBtnW) / 2
+                        local kbY = wy + windowH - togBtnH - 8
                         if isMouseInRect(kbX, kbY, togBtnW, togBtnH) then
                             Internal.ListeningToggleKey = true
                             handled = true
@@ -934,8 +937,8 @@ function _G.UI:Window(Options)
                 
                 local bg = makeSquare({Color=C.elemBg, ZIndex=4, Corner=3})
                 local ckBg = makeSquare({Color=C.inputBg, ZIndex=5, Corner=3})
-                local ck = makeText({Text="X", Color=defaultState and C.checkboxOn or C.textDim, FontSize=16, Font=Drawing.Fonts.SystemBold, ZIndex=6, Center=true})
-                local lb = makeText({Text=text, Color=defaultState and C.checkboxOn or C.textDim, FontSize=14, Font=Drawing.Fonts.SystemBold, ZIndex=5})
+                local ck = makeText({Text="X", Color=defaultState and C.accent or C.textDim, FontSize=16, Font=Drawing.Fonts.SystemBold, ZIndex=6, Center=true})
+                local lb = makeText({Text=text, Color=defaultState and C.accent or C.textDim, FontSize=14, Font=Drawing.Fonts.SystemBold, ZIndex=5})
                 
                 local state = { on = defaultState }
                 
@@ -964,8 +967,8 @@ function _G.UI:Window(Options)
                         -- Always show X, just change color
                         ck.Text = "X"
                         if state.on then
-                            ck.Color = C.checkboxOn
-                            lb.Color = C.checkboxOn
+                            ck.Color = C.accent
+                            lb.Color = C.accent
                         else
                             ck.Color = C.textDim
                             lb.Color = C.textDim
