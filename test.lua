@@ -1,8 +1,82 @@
-local Luxt1 = {}
+-- Matcha-compatible Luxt1 UI Library
+local KeyNames = {
+    [8]="Backspace",[9]="Tab",[13]="Enter",[16]="Shift",[17]="Ctrl",
+    [18]="Alt",[19]="Pause",[20]="CapsLock",[27]="Esc",[32]="Space",
+    [33]="PageUp",[34]="PageDown",[35]="End",[36]="Home",
+    [37]="Left",[38]="Up",[39]="Right",[40]="Down",
+    [45]="Insert",[46]="Delete",
+    [48]="0",[49]="1",[50]="2",[51]="3",[52]="4",
+    [53]="5",[54]="6",[55]="7",[56]="8",[57]="9",
+    [65]="A",[66]="B",[67]="C",[68]="D",[69]="E",[70]="F",
+    [71]="G",[72]="H",[73]="I",[74]="J",[75]="K",[76]="L",
+    [77]="M",[78]="N",[79]="O",[80]="P",[81]="Q",[82]="R",
+    [83]="S",[84]="T",[85]="U",[86]="V",[87]="W",[88]="X",
+    [89]="Y",[90]="Z",
+    [112]="F1",[113]="F2",[114]="F3",[115]="F4",[116]="F5",
+    [117]="F6",[118]="F7",[119]="F8",[120]="F9",[121]="F10",
+    [122]="F11",[123]="F12",
+}
 
-function Luxt1.Window(config)
-    local libName = config.Title or config.title or "LuxtLib"
-    local windowSize = config.Size or config.size or Vector2.new(580, 460)
+local vkToChar = {
+    [65]="a",[66]="b",[67]="c",[68]="d",[69]="e",[70]="f",
+    [71]="g",[72]="h",[73]="i",[74]="j",[75]="k",[76]="l",
+    [77]="m",[78]="n",[79]="o",[80]="p",[81]="q",[82]="r",
+    [83]="s",[84]="t",[85]="u",[86]="v",[87]="w",[88]="x",
+    [89]="y",[90]="z",
+    [48]="0",[49]="1",[50]="2",[51]="3",[52]="4",
+    [53]="5",[54]="6",[55]="7",[56]="8",[57]="9",
+    [32]=" ",[190]=".",[188]=",",[189]="-",[187]="=",
+}
+
+local vkToCharShift = {
+    [65]="A",[66]="B",[67]="C",[68]="D",[69]="E",[70]="F",
+    [71]="G",[72]="H",[73]="I",[74]="J",[75]="K",[76]="L",
+    [77]="M",[78]="N",[79]="O",[80]="P",[81]="Q",[82]="R",
+    [83]="S",[84]="T",[85]="U",[86]="V",[87]="W",[88]="X",
+    [89]="Y",[90]="Z",
+    [49]="!",[50]="@",[51]="#",[52]="$",[53]="%",
+    [54]="^",[55]="&",[56]="*",[57]="(",[48]=")",
+    [189]="_",[187]="+",
+}
+
+-- Helper to convert Enum.KeyCode to number
+local function KeyCodeToNumber(keyCode)
+    if type(keyCode) == "number" then
+        return keyCode
+    end
+    -- Try to extract the number value from the enum
+    for name, num in pairs(Enum.KeyCode:GetEnumItems()) do
+        if num == keyCode then
+            return num.Value
+        end
+    end
+    return 70 -- Default F key
+end
+
+-- Create global tables
+_G.UI = {}
+_G.Flags = {
+    Window = {},
+    Tab = {},
+    Section = {},
+    Widgets = {
+        Label = {},
+        Button = {},
+        Checkbox = {},
+        Slider = {},
+        Dropdown = {},
+        MultiDropdown = {},
+        Keybind = {},
+    },
+}
+
+function _G.UI:Window(Options)
+    local libName = Options.Title or "LuxtLib"
+    local windowSize = Options.Size or Vector2.new(580, 460)
+    local windowOpen = Options.Open
+    if windowOpen == nil then
+        windowOpen = true
+    end
 
     local Players = game:GetService("Players")
     local LocalPlayer = Players.LocalPlayer
@@ -23,7 +97,7 @@ function Luxt1.Window(config)
 
     local Internal = {
         Running = true,
-        Open = true,
+        Open = windowOpen,
         Dragging = false,
         DragStart = Vector2.new(0, 0),
         Position = Vector2.new(300, 100),
@@ -44,46 +118,6 @@ function Luxt1.Window(config)
     local tabs = {}
     local allDrawings = {}
     local allKeybindElems = {}
-
-    local KeyNames = {
-        [8]="Backspace",[9]="Tab",[13]="Enter",[16]="Shift",[17]="Ctrl",
-        [18]="Alt",[19]="Pause",[20]="CapsLock",[27]="Esc",[32]="Space",
-        [33]="PageUp",[34]="PageDown",[35]="End",[36]="Home",
-        [37]="Left",[38]="Up",[39]="Right",[40]="Down",
-        [45]="Insert",[46]="Delete",
-        [48]="0",[49]="1",[50]="2",[51]="3",[52]="4",
-        [53]="5",[54]="6",[55]="7",[56]="8",[57]="9",
-        [65]="A",[66]="B",[67]="C",[68]="D",[69]="E",[70]="F",
-        [71]="G",[72]="H",[73]="I",[74]="J",[75]="K",[76]="L",
-        [77]="M",[78]="N",[79]="O",[80]="P",[81]="Q",[82]="R",
-        [83]="S",[84]="T",[85]="U",[86]="V",[87]="W",[88]="X",
-        [89]="Y",[90]="Z",
-        [112]="F1",[113]="F2",[114]="F3",[115]="F4",[116]="F5",
-        [117]="F6",[118]="F7",[119]="F8",[120]="F9",[121]="F10",
-        [122]="F11",[123]="F12",
-    }
-
-    local vkToChar = {
-        [65]="a",[66]="b",[67]="c",[68]="d",[69]="e",[70]="f",
-        [71]="g",[72]="h",[73]="i",[74]="j",[75]="k",[76]="l",
-        [77]="m",[78]="n",[79]="o",[80]="p",[81]="q",[82]="r",
-        [83]="s",[84]="t",[85]="u",[86]="v",[87]="w",[88]="x",
-        [89]="y",[90]="z",
-        [48]="0",[49]="1",[50]="2",[51]="3",[52]="4",
-        [53]="5",[54]="6",[55]="7",[56]="8",[57]="9",
-        [32]=" ",[190]=".",[188]=",",[189]="-",[187]="=",
-    }
-
-    local vkToCharShift = {
-        [65]="A",[66]="B",[67]="C",[68]="D",[69]="E",[70]="F",
-        [71]="G",[72]="H",[73]="I",[74]="J",[75]="K",[76]="L",
-        [77]="M",[78]="N",[79]="O",[80]="P",[81]="Q",[82]="R",
-        [83]="S",[84]="T",[85]="U",[86]="V",[87]="W",[88]="X",
-        [89]="Y",[90]="Z",
-        [49]="!",[50]="@",[51]="#",[52]="$",[53]="%",
-        [54]="^",[55]="&",[56]="*",[57]="(",[48]=")",
-        [189]="_",[187]="+",
-    }
 
     local C = {
         shadow = Color3.fromRGB(10, 10, 10),
@@ -245,7 +279,6 @@ function Luxt1.Window(config)
             tabY = tabY + tabH + tabPad
         end
 
-        -- Hide all elements first
         for _, tab in ipairs(tabs) do
             for _, sec in ipairs(tab.sections) do
                 sec.hdrBg.Visible = false
@@ -257,7 +290,6 @@ function Luxt1.Window(config)
             end
         end
 
-        -- Calculate total content height
         local totalContentH = 0
         if Internal.ActiveTab then
             for _, sec in ipairs(Internal.ActiveTab.sections) do
@@ -335,7 +367,6 @@ function Luxt1.Window(config)
                 Internal.PrevKeys[i] = ok and pressed or false
             end
 
-            -- Toggle key listening
             if Internal.ListeningToggleKey then
                 for vk, _ in pairs(newKeys) do
                     Internal.ToggleKeyCode = vk
@@ -343,22 +374,22 @@ function Luxt1.Window(config)
                     Internal.ListeningToggleKey = false
                     break
                 end
-            -- Keybind listening
             elseif Internal.ListeningKeybind then
                 for vk, _ in pairs(newKeys) do
                     Internal.ListeningKeybind.keyCode = vk
                     Internal.ListeningKeybind.keyName = KeyNames[vk] or string.format("0x%X", vk)
                     Internal.ListeningKeybind.listening = false
+                    if Internal.ListeningKeybind.onChanged then
+                        Internal.ListeningKeybind.onChanged(vk)
+                    end
                     Internal.ListeningKeybind = nil
                     break
                 end
             else
-                -- Toggle UI
                 if newKeys[Internal.ToggleKeyCode] then
                     Internal.Open = not Internal.Open
                 end
 
-                -- Fire keybind callbacks
                 if Internal.Open then
                     for _, kb in ipairs(allKeybindElems) do
                         if not kb.listening and newKeys[kb.keyCode] then
@@ -366,35 +397,9 @@ function Luxt1.Window(config)
                         end
                     end
                 end
-
-                -- TextBox input
-                if Internal.Open and Internal.FocusedTextBox then
-                    local tb = Internal.FocusedTextBox
-                    if newKeys[0x0D] then
-                        if tb.callback then tb.callback(tb.text) end
-                        tb.text = ""
-                        Internal.FocusedTextBox = nil
-                    elseif newKeys[0x1B] then
-                        Internal.FocusedTextBox = nil
-                    elseif newKeys[0x08] then
-                        if #tb.text > 0 then
-                            tb.text = tb.text:sub(1, -2)
-                        end
-                    else
-                        local shift = shiftHeld()
-                        for vk, _ in pairs(newKeys) do
-                            local ch = (shift and vkToCharShift[vk]) or vkToChar[vk]
-                            if ch then
-                                tb.text = tb.text .. ch
-                                break
-                            end
-                        end
-                    end
-                end
             end
 
             if Internal.Open then
-                -- Dragging
                 if Internal.Dragging then
                     if m1 then
                         Internal.Position = Vector2.new(mx - Internal.DragStart.X, my - Internal.DragStart.Y)
@@ -403,7 +408,6 @@ function Luxt1.Window(config)
                     end
                 end
 
-                -- Slider dragging
                 if Internal.ActiveSlider then
                     if m1 then
                         local slider = Internal.ActiveSlider
@@ -418,12 +422,10 @@ function Luxt1.Window(config)
                     end
                 end
 
-                -- Click handling
                 if m1Click and not Internal.Dragging and not Internal.ActiveSlider then
                     local wx, wy = Internal.Position.X, Internal.Position.Y
                     local handled = false
 
-                    -- Dropdown options first
                     if Internal.OpenDropdown and Internal.OpenDropdown.isOpen then
                         local dd = Internal.OpenDropdown
                         local oy = dd.lastY + elemH + elemPad
@@ -441,18 +443,15 @@ function Luxt1.Window(config)
                     end
 
                     if not handled then
-                        -- Toggle key button
                         local kbX, kbY = wx+8, wy+windowH-38
                         if isMouseInRect(kbX, kbY, togBtnW, togBtnH) then
                             Internal.ListeningToggleKey = true
                             handled = true
-                        -- Drag area
                         elseif isMouseInRect(wx, wy, sideW, 60) then
                             Internal.Dragging = true
                             Internal.DragStart = Vector2.new(mx - wx, my - wy)
                             handled = true
                         else
-                            -- Tab buttons
                             for _, tab in ipairs(tabs) do
                                 if isMouseInRect(wx+5, tab.btnY-2, sideW-10, tabH) then
                                     Internal.ActiveTab = tab
@@ -466,15 +465,10 @@ function Luxt1.Window(config)
                                 end
                             end
 
-                            -- Content area
                             if not handled and Internal.ActiveTab then
-                                local viewTop = getContentY()
-                                local viewBottom = getContentY() + getContentH()
-                                
                                 for _, sec in ipairs(Internal.ActiveTab.sections) do
                                     if handled then break end
                                     
-                                    -- Elements first
                                     if sec.open then
                                         for _, el in ipairs(sec.elements) do
                                             if el.posY and el.posY > 0 then
@@ -490,7 +484,6 @@ function Luxt1.Window(config)
                                         end
                                     end
                                     
-                                    -- Section header
                                     if not handled and sec.posY then
                                         if my >= sec.posY and my < sec.headerEndY then
                                             if mx >= getContentX() and mx <= getContentX() + getContentW() then
@@ -508,14 +501,12 @@ function Luxt1.Window(config)
                         end
                     end
                     
-                    -- Close dropdown if clicked elsewhere
                     if not handled and Internal.OpenDropdown then
                         Internal.OpenDropdown.isOpen = false
                         Internal.OpenDropdown = nil
                     end
                 end
 
-                -- Scroll with arrow keys
                 if isMouseInRect(getContentX(), getContentY(), getContentW(), getContentH()) then
                     if newKeys[0x26] then
                         Internal.ScrollOffset = math.clamp(Internal.ScrollOffset - 30, 0, Internal.MaxScroll)
@@ -543,8 +534,8 @@ function Luxt1.Window(config)
 
     local WindowAPI = {}
 
-    function WindowAPI:Tab(config)
-        local tabText = config.Title or config.title or "Tab"
+    function WindowAPI:Tab(Options)
+        local tabText = Options.Title or "Tab"
         local btnDraw = makeText({Text=tabText, Color=C.accent, FontSize=14, Font=Drawing.Fonts.System, ZIndex=3})
         
         local tab = {
@@ -561,8 +552,8 @@ function Luxt1.Window(config)
 
         local TabAPI = {}
 
-        function TabAPI:Section(config)
-            local secText = config.Title or config.title or "Section"
+        function TabAPI:Section(Options)
+            local secText = Options.Title or "Section"
             
             local hdrBg = makeSquare({Color=C.sectionBg, ZIndex=3, Corner=5})
             local hdrTxt = makeText({Text=secText, Color=C.accent, FontSize=14, Font=Drawing.Fonts.SystemBold, ZIndex=4})
@@ -583,9 +574,45 @@ function Luxt1.Window(config)
 
             local SectionAPI = {}
 
-            function SectionAPI:Button(config)
-                local text = config.Title or config.title or config.Text or config.text or "Button"
-                local cb = config.Callback or config.callback or function() end
+            function SectionAPI:Label(Options)
+                local text = Options.Title or "Label"
+                local bg = makeSquare({Color=C.elemBg, ZIndex=4, Corner=5})
+                local tx = makeText({Text=text, Color=C.textPrimary, FontSize=14, Font=Drawing.Fonts.SystemBold, ZIndex=5, Center=true})
+                
+                local labelAPI = {}
+                
+                local elem = {
+                    posY = 0, posX = 0, width = 0,
+                    getHeight = function() return elemH end,
+                    hide = function()
+                        bg.Visible = false
+                        tx.Visible = false
+                    end,
+                    update = function(x, y, w, h, vis)
+                        bg.Position = Vector2.new(x+8, y)
+                        bg.Size = Vector2.new(w-16, h)
+                        bg.Visible = vis
+                        tx.Position = Vector2.new(x+8+(w-16)/2, y+h/2-7)
+                        tx.Visible = vis
+                    end,
+                    onClick = function() return false end,
+                }
+                table.insert(section.elements, elem)
+                
+                function labelAPI:Get()
+                    return tx.Text
+                end
+                
+                function labelAPI:Set(newText)
+                    tx.Text = newText
+                end
+                
+                return labelAPI
+            end
+
+            function SectionAPI:Button(Options, Callback)
+                local text = Options.Title or "Button"
+                local cb = Callback or function() end
                 
                 local bg = makeSquare({Color=C.elemBg, ZIndex=4, Corner=3})
                 local tx = makeText({Text=text, Color=C.textSecondary, FontSize=14, Font=Drawing.Fonts.SystemBold, ZIndex=5, Center=true})
@@ -619,10 +646,10 @@ function Luxt1.Window(config)
                 table.insert(section.elements, elem)
             end
 
-            function SectionAPI:Toggle(config)
-                local text = config.Title or config.title or config.Text or config.text or "Toggle"
-                local cb = config.Callback or config.callback or function() end
-                local defaultState = config.Default or config.default or false
+            function SectionAPI:Checkbox(Options, Callback)
+                local text = Options.Title or "Checkbox"
+                local cb = Callback or function() end
+                local defaultState = Options.Default or false
                 
                 local bg = makeSquare({Color=C.elemBg, ZIndex=4, Corner=3})
                 local ckBg = makeSquare({Color=C.inputBg, ZIndex=5, Corner=3})
@@ -630,6 +657,8 @@ function Luxt1.Window(config)
                 local lb = makeText({Text=text, Color=defaultState and C.accent or C.textDim, FontSize=14, Font=Drawing.Fonts.SystemBold, ZIndex=5})
                 
                 local state = { on = defaultState }
+                
+                local checkboxAPI = {}
 
                 local elem = {
                     posY = 0, posX = 0, width = 0,
@@ -669,23 +698,35 @@ function Luxt1.Window(config)
                 }
                 table.insert(section.elements, elem)
                 
+                function checkboxAPI:Get()
+                    return state.on
+                end
+                
+                function checkboxAPI:Set(bool)
+                    state.on = bool
+                    cb(bool)
+                end
+                
                 if defaultState then
                     cb(defaultState)
                 end
+                
+                return checkboxAPI
             end
 
-            function SectionAPI:Slider(config)
-                local text = config.Title or config.title or "Slider"
-                local min = config.Min or config.min or 0
-                local max = config.Max or config.max or 100
-                local defaultVal = config.Default or config.default or min
-                local cb = config.Callback or config.callback or function() end
+            function SectionAPI:Slider(Options, Callback)
+                local text = Options.Title or "Slider"
+                local min = Options.Min or 0
+                local max = Options.Max or 100
+                local defaultVal = Options.Default or min
+                local suffix = Options.Suffix or ""
+                local cb = Callback or function() end
                 
                 local bg = makeSquare({Color=C.elemBg, ZIndex=4, Corner=3})
                 local trackBg = makeSquare({Color=C.sliderTrack, ZIndex=5, Corner=3})
                 local fill = makeSquare({Color=C.accent, ZIndex=6, Corner=3})
                 local lb = makeText({Text=text, Color=C.textPrimary, FontSize=14, Font=Drawing.Fonts.SystemBold, ZIndex=5})
-                local valTxt = makeText({Text=tostring(defaultVal), Color=C.accent, FontSize=12, Font=Drawing.Fonts.SystemBold, ZIndex=5})
+                local valTxt = makeText({Text=tostring(defaultVal)..suffix, Color=C.accent, FontSize=12, Font=Drawing.Fonts.SystemBold, ZIndex=5})
                 
                 local trackW = 150
                 local slider = {
@@ -696,6 +737,8 @@ function Luxt1.Window(config)
                     trackX = 0,
                     trackW = trackW,
                 }
+                
+                local sliderAPI = {}
 
                 local elem = {
                     posY = 0, posX = 0, width = 0,
@@ -728,7 +771,7 @@ function Luxt1.Window(config)
                         lb.Position = Vector2.new(sx + trackW + 12, y + h/2 - 7)
                         lb.Visible = vis
                         
-                        valTxt.Text = tostring(slider.value)
+                        valTxt.Text = tostring(slider.value)..suffix
                         valTxt.Position = Vector2.new(sx + trackW + 12 + estW(text, 14) + 8, y + h/2 - 6)
                         valTxt.Visible = vis
                     end,
@@ -742,80 +785,27 @@ function Luxt1.Window(config)
                 }
                 table.insert(section.elements, elem)
                 
+                function sliderAPI:Get()
+                    return slider.value
+                end
+                
+                function sliderAPI:Set(val)
+                    if val >= min and val <= max then
+                        slider.value = val
+                        cb(val)
+                    end
+                end
+                
                 cb(defaultVal)
+                
+                return sliderAPI
             end
 
-            function SectionAPI:Keybind(config)
-                local text = config.Title or config.title or "KeyBind"
-                local defaultKey = config.Default or config.default or 0x46
-                local cb = config.Callback or config.callback or function() end
-                
-                local keyName = KeyNames[defaultKey] or string.format("0x%X", defaultKey)
-                
-                local bg = makeSquare({Color=C.elemBg, ZIndex=4, Corner=3})
-                local kW, kH = 85, 24
-                local kBg = makeSquare({Color=C.inputBg, ZIndex=5, Corner=5})
-                local kTx = makeText({Text="[ "..keyName.." ]", Color=C.accent, FontSize=13, Font=Drawing.Fonts.SystemBold, ZIndex=6, Center=true, Outline=true})
-                local lb = makeText({Text=text, Color=C.textPrimary, FontSize=13, Font=Drawing.Fonts.SystemBold, ZIndex=5})
-                
-                local keybind = {
-                    keyCode = defaultKey,
-                    keyName = keyName,
-                    callback = cb,
-                    listening = false,
-                }
-                table.insert(allKeybindElems, keybind)
-
-                local elem = {
-                    posY = 0, posX = 0, width = 0,
-                    btnX = 0, btnY = 0,
-                    getHeight = function() return elemH end,
-                    hide = function()
-                        bg.Visible = false
-                        kBg.Visible = false
-                        kTx.Visible = false
-                        lb.Visible = false
-                    end,
-                    update = function(x, y, w, h, vis)
-                        bg.Position = Vector2.new(x+8, y)
-                        bg.Size = Vector2.new(w-16, h)
-                        bg.Visible = vis
-                        
-                        local bx, by = x+16, y+(h-kH)/2
-                        elem.btnX = bx
-                        elem.btnY = by
-                        
-                        kBg.Position = Vector2.new(bx, by)
-                        kBg.Size = Vector2.new(kW, kH)
-                        kBg.Visible = vis
-                        
-                        if keybind.listening then
-                            kTx.Text = "..."
-                            kTx.Color = C.yellow
-                        else
-                            kTx.Text = "[ "..keybind.keyName.." ]"
-                            kTx.Color = C.accent
-                        end
-                        kTx.Position = Vector2.new(bx+kW/2, by+kH/2-7)
-                        kTx.Visible = vis
-                        
-                        lb.Position = Vector2.new(bx+kW+10, y+h/2-7)
-                        lb.Visible = vis
-                    end,
-                    onClick = function()
-                        keybind.listening = true
-                        Internal.ListeningKeybind = keybind
-                        return true
-                    end,
-                }
-                table.insert(section.elements, elem)
-            end
-
-            function SectionAPI:Dropdown(config)
-                local title = config.Title or config.title or "Dropdown"
-                local options = config.Options or config.options or {}
-                local defaultOption = config.Default or config.default or options[1]
-                local cb = config.Callback or config.callback or function() end
+            function SectionAPI:Dropdown(Options, Callback)
+                local title = Options.Title or "Dropdown"
+                local options = Options.Options or {}
+                local defaultOption = Options.Default or options[1]
+                local cb = Callback or function() end
                 
                 local hdrBg = makeSquare({Color=C.elemBg, ZIndex=4, Corner=3})
                 local hdrTx = makeText({Text=title..": "..(defaultOption or ""), Color=C.accent, FontSize=14, Font=Drawing.Fonts.SystemBold, ZIndex=5})
@@ -829,6 +819,7 @@ function Luxt1.Window(config)
                     bg.Size = Vector2.new(100, dropItemH)
                     bg.Visible = false
                     bg.ZIndex = 100
+                    bg.Corner = 3
                     table.insert(allDrawings, bg)
                     
                     local txt = Drawing.new("Text")
@@ -853,6 +844,8 @@ function Luxt1.Window(config)
                     lastY = 0,
                     lastW = 0,
                 }
+                
+                local dropdownAPI = {}
 
                 local elem = {
                     posY = 0, posX = 0, width = 0,
@@ -930,31 +923,89 @@ function Luxt1.Window(config)
                 }
                 table.insert(section.elements, elem)
                 
+                function dropdownAPI:Get()
+                    return dropState.selected
+                end
+                
+                function dropdownAPI:Set(option)
+                    if table.find(options, option) then
+                        dropState.selected = option
+                        cb(option)
+                    end
+                end
+                
                 if defaultOption then
                     cb(defaultOption)
                 end
+                
+                return dropdownAPI
             end
 
-            function SectionAPI:Label(config)
-                local text = config.Title or config.title or config.Text or config.text or "Label"
-                local bg = makeSquare({Color=C.elemBg, ZIndex=4, Corner=5})
-                local tx = makeText({Text=text, Color=C.textPrimary, FontSize=14, Font=Drawing.Fonts.SystemBold, ZIndex=5, Center=true})
+            function SectionAPI:Keybind(Options, Callback, Changed)
+                local text = Options.Title or "KeyBind"
+                local defaultKey = Options.Key or Enum.KeyCode.F
+                local cb = Callback or function() end
+                local onChange = Changed or function() end
                 
+                local keyCode = KeyCodeToNumber(defaultKey)
+                local keyName = KeyNames[keyCode] or "F"
+                
+                local bg = makeSquare({Color=C.elemBg, ZIndex=4, Corner=3})
+                local kW, kH = 85, 24
+                local kBg = makeSquare({Color=C.inputBg, ZIndex=5, Corner=5})
+                local kTx = makeText({Text="[ "..keyName.." ]", Color=C.accent, FontSize=13, Font=Drawing.Fonts.SystemBold, ZIndex=6, Center=true, Outline=true})
+                local lb = makeText({Text=text, Color=C.textPrimary, FontSize=13, Font=Drawing.Fonts.SystemBold, ZIndex=5})
+                
+                local keybind = {
+                    keyCode = keyCode,
+                    keyName = keyName,
+                    callback = cb,
+                    onChanged = onChange,
+                    listening = false,
+                }
+                table.insert(allKeybindElems, keybind)
+
                 local elem = {
                     posY = 0, posX = 0, width = 0,
+                    btnX = 0, btnY = 0,
                     getHeight = function() return elemH end,
                     hide = function()
                         bg.Visible = false
-                        tx.Visible = false
+                        kBg.Visible = false
+                        kTx.Visible = false
+                        lb.Visible = false
                     end,
                     update = function(x, y, w, h, vis)
                         bg.Position = Vector2.new(x+8, y)
                         bg.Size = Vector2.new(w-16, h)
                         bg.Visible = vis
-                        tx.Position = Vector2.new(x+8+(w-16)/2, y+h/2-7)
-                        tx.Visible = vis
+                        
+                        local bx, by = x+16, y+(h-kH)/2
+                        elem.btnX = bx
+                        elem.btnY = by
+                        
+                        kBg.Position = Vector2.new(bx, by)
+                        kBg.Size = Vector2.new(kW, kH)
+                        kBg.Visible = vis
+                        
+                        if keybind.listening then
+                            kTx.Text = "..."
+                            kTx.Color = C.yellow
+                        else
+                            kTx.Text = "[ "..keybind.keyName.." ]"
+                            kTx.Color = C.accent
+                        end
+                        kTx.Position = Vector2.new(bx+kW/2, by+kH/2-7)
+                        kTx.Visible = vis
+                        
+                        lb.Position = Vector2.new(bx+kW+10, y+h/2-7)
+                        lb.Visible = vis
                     end,
-                    onClick = function() return false end,
+                    onClick = function()
+                        keybind.listening = true
+                        Internal.ListeningKeybind = keybind
+                        return true
+                    end,
                 }
                 table.insert(section.elements, elem)
             end
@@ -964,12 +1015,20 @@ function Luxt1.Window(config)
 
         return TabAPI
     end
+    
+    function WindowAPI:Toggle(bool)
+        if bool == nil then
+            Internal.Open = not Internal.Open
+        else
+            Internal.Open = bool
+        end
+    end
+    
+    function WindowAPI:Unload()
+        Internal.Running = false
+    end
 
     return WindowAPI
 end
-
--- Create global UI table
-_G.UI = Luxt1
-_G.Flags = {}
 
 notify("UI Library Loaded!", "Success", 2)
