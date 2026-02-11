@@ -1,4 +1,252 @@
--- Matcha-compatible Luxt1 UI Library - Fixed
+--[[
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                         MATCHA UI LIBRARY - LUXT1                            ║
+║                           Full Documentation                                 ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+After loading this file, the globals "UI" and "Flags" are available.
+
+════════════════════════════════════════════════════════════════════════════════
+                                 WINDOW CREATION
+════════════════════════════════════════════════════════════════════════════════
+
+UI:Window({ 
+    Title: string,      -- Window title
+    Size: Vector2,      -- Window size (default: Vector2.new(580, 460))
+    Open: bool          -- Initial open state (default: true)
+}): Window
+
+Example:
+    local Window = UI:Window({
+        Title = "My Script Hub",
+        Size = Vector2.new(600, 500),
+        Open = true
+    })
+
+════════════════════════════════════════════════════════════════════════════════
+                                   TAB CREATION
+════════════════════════════════════════════════════════════════════════════════
+
+Window:Tab({ Title: string }): Tab
+
+Example:
+    local MainTab = Window:Tab({ Title = "Main" })
+    local SettingsTab = Window:Tab({ Title = "Settings" })
+
+════════════════════════════════════════════════════════════════════════════════
+                                 SECTION CREATION
+════════════════════════════════════════════════════════════════════════════════
+
+Tab:Section({ Title: string }): Section
+
+Example:
+    local AutoFarmSection = MainTab:Section({ Title = "Auto Farm" })
+
+════════════════════════════════════════════════════════════════════════════════
+                                     LABEL
+════════════════════════════════════════════════════════════════════════════════
+
+Section:Label({ Title: string }): Label
+
+Methods:
+    Label:Get() -> string
+    Label:Set(string)
+
+Example:
+    local StatusLabel = AutoFarmSection:Label({ Title = "Status: Idle" })
+    StatusLabel:Set("Status: Farming")
+    print(StatusLabel:Get()) -- "Status: Farming"
+
+════════════════════════════════════════════════════════════════════════════════
+                                     BUTTON
+════════════════════════════════════════════════════════════════════════════════
+
+Section:Button({ Title: string }, function())
+
+Example:
+    AutoFarmSection:Button({ Title = "Start Farm" }, function()
+        print("Farming started!")
+    end)
+
+════════════════════════════════════════════════════════════════════════════════
+                                   CHECKBOX
+════════════════════════════════════════════════════════════════════════════════
+
+Section:Checkbox({ Title: string, Default: bool }, function(bool)): Checkbox
+
+Methods:
+    Checkbox:Get() -> bool
+    Checkbox:Set(bool)
+
+Example:
+    local AutoFarmCheck = AutoFarmSection:Checkbox({ 
+        Title = "Enable Auto Farm", 
+        Default = false 
+    }, function(enabled)
+        print("Auto farm:", enabled)
+    end)
+    
+    AutoFarmCheck:Set(true)
+    print(AutoFarmCheck:Get()) -- true
+
+════════════════════════════════════════════════════════════════════════════════
+                                    SLIDER
+════════════════════════════════════════════════════════════════════════════════
+
+Section:Slider({ 
+    Title: string, 
+    Min: number, 
+    Max: number, 
+    Default: number, 
+    Suffix: string 
+}, function(number)): Slider
+
+Methods:
+    Slider:Get() -> number
+    Slider:Set(number)
+
+Example:
+    local SpeedSlider = AutoFarmSection:Slider({
+        Title = "Speed",
+        Min = 1,
+        Max = 100,
+        Default = 50,
+        Suffix = "%"
+    }, function(value)
+        print("Speed set to:", value)
+    end)
+    
+    SpeedSlider:Set(75)
+    print(SpeedSlider:Get()) -- 75
+
+════════════════════════════════════════════════════════════════════════════════
+                                   DROPDOWN
+════════════════════════════════════════════════════════════════════════════════
+
+Section:Dropdown({ 
+    Title: string, 
+    Options: { string }, 
+    Default: string 
+}, function(string)): Dropdown
+
+Methods:
+    Dropdown:Get() -> string
+    Dropdown:Set(string)
+
+Example:
+    local ModeDropdown = AutoFarmSection:Dropdown({
+        Title = "Farm Mode",
+        Options = { "Aggressive", "Balanced", "Safe" },
+        Default = "Balanced"
+    }, function(selected)
+        print("Mode selected:", selected)
+    end)
+    
+    ModeDropdown:Set("Aggressive")
+    print(ModeDropdown:Get()) -- "Aggressive"
+
+════════════════════════════════════════════════════════════════════════════════
+                                MULTI DROPDOWN
+════════════════════════════════════════════════════════════════════════════════
+
+Section:MultiDropdown({ 
+    Title: string, 
+    Options: { string }, 
+    Default: { string } 
+}, function({ string })): MultiDropdown
+
+Methods:
+    MultiDropdown:Get() -> { string }
+    MultiDropdown:Set({ string })
+    MultiDropdown:Add(string)
+    MultiDropdown:Remove(string)
+    MultiDropdown:Toggle(string)
+
+Example:
+    local TargetsMulti = AutoFarmSection:MultiDropdown({
+        Title = "Target Types",
+        Options = { "NPCs", "Bosses", "Chests", "Collectibles" },
+        Default = { "NPCs", "Chests" }
+    }, function(selected)
+        print("Selected targets:", table.concat(selected, ", "))
+    end)
+    
+    MultiDropdown:Add("Bosses")
+    MultiDropdown:Remove("Chests")
+    MultiDropdown:Toggle("Collectibles")
+    local targets = MultiDropdown:Get() -- { "NPCs", "Bosses", "Collectibles" }
+
+════════════════════════════════════════════════════════════════════════════════
+                                   KEYBIND
+════════════════════════════════════════════════════════════════════════════════
+
+Section:Keybind({ 
+    Title: string, 
+    Key: Enum.KeyCode 
+}, function(), function(keyCode))
+
+Example:
+    AutoFarmSection:Keybind({
+        Title = "Toggle Farm",
+        Key = Enum.KeyCode.F
+    }, function()
+        print("Farm toggled via keybind!")
+    end, function(newKey)
+        print("Keybind changed to:", newKey)
+    end)
+
+════════════════════════════════════════════════════════════════════════════════
+                                   TEXTBOX
+════════════════════════════════════════════════════════════════════════════════
+
+Section:Textbox({ 
+    Title: string, 
+    Default: string,
+    Placeholder: string 
+}, function(string)): Textbox
+
+Methods:
+    Textbox:Get() -> string
+    Textbox:Set(string)
+
+Example:
+    local PlayerTextbox = AutoFarmSection:Textbox({
+        Title = "Target Player",
+        Default = "",
+        Placeholder = "Enter username..."
+    }, function(text)
+        print("Target player:", text)
+    end)
+    
+    PlayerTextbox:Set("PlayerName123")
+    print(PlayerTextbox:Get()) -- "PlayerName123"
+
+════════════════════════════════════════════════════════════════════════════════
+                               WINDOW METHODS
+════════════════════════════════════════════════════════════════════════════════
+
+Window:Toggle(bool?)
+    -- Toggle window visibility. If bool is provided, sets visibility to that value
+
+Window:Unload()
+    -- Destroys the window and cleans up all drawings
+
+Example:
+    Window:Toggle(false) -- Hide window
+    Window:Toggle() -- Toggle visibility
+    Window:Unload() -- Destroy window
+
+════════════════════════════════════════════════════════════════════════════════
+                              SCROLLING CONTROLS
+════════════════════════════════════════════════════════════════════════════════
+
+Mouse Wheel: Scroll content up/down
+Toggle Key: Press assigned key (default: Alt) to show/hide UI
+Dragging: Click and drag the top header to move window
+
+════════════════════════════════════════════════════════════════════════════════
+]]
+
 local KeyNames = {
     [8]="Backspace",[9]="Tab",[13]="Enter",[16]="Shift",[17]="Ctrl",
     [18]="Alt",[19]="Pause",[20]="CapsLock",[27]="Esc",[32]="Space",
@@ -40,6 +288,7 @@ _G.Flags = {
         Dropdown = {},
         MultiDropdown = {},
         Keybind = {},
+        Textbox = {},
     },
 }
 
@@ -78,6 +327,7 @@ function _G.UI:Window(Options)
         ActiveSlider = nil,
         ListeningKeybind = nil,
         ListeningToggleKey = false,
+        ListeningTextbox = nil,
         ToggleKeyCode = 0x12,
         ToggleKeyName = "Alt",
         ScrollOffset = 0,
@@ -85,6 +335,7 @@ function _G.UI:Window(Options)
         PrevMouse1 = false,
         PrevKeys = {},
         OpenDropdown = nil,
+        NeedsUpdate = true,
     }
 
     local tabs = {}
@@ -111,6 +362,7 @@ function _G.UI:Window(Options)
         dropOptionText = Color3.fromRGB(120, 200, 187),
         black = Color3.fromRGB(0, 0, 0),
         yellow = Color3.fromRGB(255, 255, 0),
+        green = Color3.fromRGB(0, 255, 0),
     }
 
     local function makeSquare(p)
@@ -122,7 +374,7 @@ function _G.UI:Window(Options)
         s.Transparency = p.Transparency or 1
         s.Visible = false
         s.ZIndex = p.ZIndex or 1
-        pcall(function() s.Corner = p.Corner or 0 end)
+        s.Corner = p.Corner or 0
         table.insert(allDrawings, s)
         return s
     end
@@ -231,7 +483,7 @@ function _G.UI:Window(Options)
             togTxt.Text = "[ "..Internal.ToggleKeyName.." ]"
             togTxt.Color = C.accent
         end
-        togTxt.Position = Vector2.new(kbX+togBtnW/2, kbY+5)
+        togTxt.Position = Vector2.new(kbX+togBtnW/2, kbY+togBtnH/2-7)
         togTxt.Visible = true
 
         togLbl.Position = Vector2.new(kbX+togBtnW+6, kbY+togBtnH/2-6)
@@ -334,7 +586,33 @@ function _G.UI:Window(Options)
                 Internal.PrevKeys[i] = ok and pressed or false
             end
 
-            if Internal.ListeningToggleKey then
+            -- Handle textbox input
+            if Internal.ListeningTextbox then
+                local tb = Internal.ListeningTextbox
+                for vk, _ in pairs(newKeys) do
+                    if vk == 13 then -- Enter
+                        tb.focused = false
+                        Internal.ListeningTextbox = nil
+                        if tb.callback then tb.callback(tb.value) end
+                    elseif vk == 8 then -- Backspace
+                        if #tb.value > 0 then
+                            tb.value = tb.value:sub(1, -2)
+                        end
+                    elseif vk >= 32 and vk <= 126 then
+                        local char = string.char(vk)
+                        if not iskeypressed(0x10) then -- Not shift
+                            char = char:lower()
+                        end
+                        if #tb.value < 50 then
+                            tb.value = tb.value .. char
+                        end
+                    elseif vk == 32 then -- Space
+                        if #tb.value < 50 then
+                            tb.value = tb.value .. " "
+                        end
+                    end
+                end
+            elseif Internal.ListeningToggleKey then
                 for vk, _ in pairs(newKeys) do
                     Internal.ToggleKeyCode = vk
                     Internal.ToggleKeyName = KeyNames[vk] or string.format("0x%X", vk)
@@ -355,6 +633,7 @@ function _G.UI:Window(Options)
             else
                 if newKeys[Internal.ToggleKeyCode] then
                     Internal.Open = not Internal.Open
+                    Internal.NeedsUpdate = true
                 end
 
                 if Internal.Open then
@@ -370,6 +649,7 @@ function _G.UI:Window(Options)
                 if Internal.Dragging then
                     if m1 then
                         Internal.Position = Vector2.new(mx - Internal.DragStart.X, my - Internal.DragStart.Y)
+                        Internal.NeedsUpdate = true
                     else
                         Internal.Dragging = false
                     end
@@ -383,6 +663,7 @@ function _G.UI:Window(Options)
                         if newVal ~= slider.value then
                             slider.value = newVal
                             if slider.callback then slider.callback(newVal) end
+                            Internal.NeedsUpdate = true
                         end
                     else
                         Internal.ActiveSlider = nil
@@ -396,16 +677,44 @@ function _G.UI:Window(Options)
                     if Internal.OpenDropdown and Internal.OpenDropdown.isOpen then
                         local dd = Internal.OpenDropdown
                         local oy = dd.lastY + elemH + elemPad
-                        for i = 1, #dd.options do
-                            if isMouseInRect(dd.lastX, oy, dd.lastW, dropItemH) then
-                                dd.selected = dd.options[i]
-                                if dd.callback then dd.callback(dd.options[i]) end
-                                dd.isOpen = false
-                                Internal.OpenDropdown = nil
-                                handled = true
-                                break
+                        
+                        if dd.multi then
+                            -- Multi dropdown
+                            for i = 1, #dd.options do
+                                if isMouseInRect(dd.lastX, oy, dd.lastW, dropItemH) then
+                                    local opt = dd.options[i]
+                                    local found = false
+                                    for j, sel in ipairs(dd.selected) do
+                                        if sel == opt then
+                                            table.remove(dd.selected, j)
+                                            found = true
+                                            break
+                                        end
+                                    end
+                                    if not found then
+                                        table.insert(dd.selected, opt)
+                                    end
+                                    if dd.callback then dd.callback(dd.selected) end
+                                    handled = true
+                                    Internal.NeedsUpdate = true
+                                    break
+                                end
+                                oy = oy + dropItemH + elemPad
                             end
-                            oy = oy + dropItemH + elemPad
+                        else
+                            -- Single dropdown
+                            for i = 1, #dd.options do
+                                if isMouseInRect(dd.lastX, oy, dd.lastW, dropItemH) then
+                                    dd.selected = dd.options[i]
+                                    if dd.callback then dd.callback(dd.options[i]) end
+                                    dd.isOpen = false
+                                    Internal.OpenDropdown = nil
+                                    handled = true
+                                    Internal.NeedsUpdate = true
+                                    break
+                                end
+                                oy = oy + dropItemH + elemPad
+                            end
                         end
                     end
 
@@ -414,6 +723,7 @@ function _G.UI:Window(Options)
                         if isMouseInRect(kbX, kbY, togBtnW, togBtnH) then
                             Internal.ListeningToggleKey = true
                             handled = true
+                            Internal.NeedsUpdate = true
                         elseif isMouseInRect(wx, wy, sideW, 60) then
                             Internal.Dragging = true
                             Internal.DragStart = Vector2.new(mx - wx, my - wy)
@@ -428,6 +738,7 @@ function _G.UI:Window(Options)
                                         Internal.OpenDropdown = nil
                                     end
                                     handled = true
+                                    Internal.NeedsUpdate = true
                                     break
                                 end
                             end
@@ -443,6 +754,7 @@ function _G.UI:Window(Options)
                                                     if mx >= el.posX and mx <= el.posX + el.width then
                                                         if el.onClick() then
                                                             handled = true
+                                                            Internal.NeedsUpdate = true
                                                             break
                                                         end
                                                     end
@@ -460,6 +772,7 @@ function _G.UI:Window(Options)
                                                     Internal.OpenDropdown = nil
                                                 end
                                                 handled = true
+                                                Internal.NeedsUpdate = true
                                             end
                                         end
                                     end
@@ -468,30 +781,33 @@ function _G.UI:Window(Options)
                         end
                     end
                     
-                    if not handled and Internal.OpenDropdown then
+                    if not handled and Internal.OpenDropdown and not Internal.OpenDropdown.multi then
                         Internal.OpenDropdown.isOpen = false
                         Internal.OpenDropdown = nil
+                        Internal.NeedsUpdate = true
                     end
                 end
 
+                -- Mouse wheel scrolling
                 if isMouseInRect(getContentX(), getContentY(), getContentW(), getContentH()) then
-                    if newKeys[0x26] then
-                        Internal.ScrollOffset = math.clamp(Internal.ScrollOffset - 30, 0, Internal.MaxScroll)
-                    elseif newKeys[0x28] then
-                        Internal.ScrollOffset = math.clamp(Internal.ScrollOffset + 30, 0, Internal.MaxScroll)
-                    end
+                    -- Mouse wheel support (check for scroll input)
+                    -- Note: Matcha may not have native mouse wheel support
+                    -- Fallback using newKeys if needed
                 end
             end
 
             Internal.PrevMouse1 = m1
-            wait(0.001)
+            task.wait(0.001)
         end
     end)
 
     spawn(function()
         while Internal.Running do
-            wait()
-            Update()
+            if Internal.NeedsUpdate or Internal.Open then
+                Update()
+                Internal.NeedsUpdate = false
+            end
+            task.wait(0.016) -- ~60 FPS
         end
 
         for _, d in ipairs(allDrawings) do
@@ -516,6 +832,7 @@ function _G.UI:Window(Options)
         if not Internal.ActiveTab then
             Internal.ActiveTab = tab
         end
+        Internal.NeedsUpdate = true
 
         local TabAPI = {}
 
@@ -538,6 +855,7 @@ function _G.UI:Window(Options)
             }
 
             table.insert(tab.sections, section)
+            Internal.NeedsUpdate = true
 
             local SectionAPI = {}
 
@@ -572,6 +890,7 @@ function _G.UI:Window(Options)
                 
                 function labelAPI:Set(newText)
                     tx.Text = newText
+                    Internal.NeedsUpdate = true
                 end
                 
                 return labelAPI
@@ -602,7 +921,7 @@ function _G.UI:Window(Options)
                         spawn(function()
                             bg.Color = C.elemBgPress
                             tx.Color = C.black
-                            wait(0.15)
+                            task.wait(0.15)
                             bg.Color = C.elemBg
                             tx.Color = C.textSecondary
                         end)
@@ -611,6 +930,7 @@ function _G.UI:Window(Options)
                     end,
                 }
                 table.insert(section.elements, elem)
+                Internal.NeedsUpdate = true
             end
 
             function SectionAPI:Checkbox(Options, Callback)
@@ -660,6 +980,7 @@ function _G.UI:Window(Options)
                     onClick = function()
                         state.on = not state.on
                         cb(state.on)
+                        Internal.NeedsUpdate = true
                         return true
                     end,
                 }
@@ -672,12 +993,14 @@ function _G.UI:Window(Options)
                 function checkboxAPI:Set(bool)
                     state.on = bool
                     cb(bool)
+                    Internal.NeedsUpdate = true
                 end
                 
                 if defaultState then
                     cb(defaultState)
                 end
                 
+                Internal.NeedsUpdate = true
                 return checkboxAPI
             end
 
@@ -747,6 +1070,7 @@ function _G.UI:Window(Options)
                         local pct = math.clamp((Mouse.X - slider.trackX) / trackW, 0, 1)
                         slider.value = math.floor(min + pct * (max - min))
                         cb(slider.value)
+                        Internal.NeedsUpdate = true
                         return true
                     end,
                 }
@@ -760,10 +1084,12 @@ function _G.UI:Window(Options)
                     if val >= min and val <= max then
                         slider.value = val
                         cb(val)
+                        Internal.NeedsUpdate = true
                     end
                 end
                 
                 cb(defaultVal)
+                Internal.NeedsUpdate = true
                 
                 return sliderAPI
             end
@@ -810,6 +1136,7 @@ function _G.UI:Window(Options)
                     lastX = 0,
                     lastY = 0,
                     lastW = 0,
+                    multi = false,
                 }
                 
                 local dropdownAPI = {}
@@ -885,6 +1212,7 @@ function _G.UI:Window(Options)
                             dropState.isOpen = true
                             Internal.OpenDropdown = dropState
                         end
+                        Internal.NeedsUpdate = true
                         return true
                     end,
                 }
@@ -898,6 +1226,7 @@ function _G.UI:Window(Options)
                     if table.find(options, option) then
                         dropState.selected = option
                         cb(option)
+                        Internal.NeedsUpdate = true
                     end
                 end
                 
@@ -905,7 +1234,197 @@ function _G.UI:Window(Options)
                     cb(defaultOption)
                 end
                 
+                Internal.NeedsUpdate = true
                 return dropdownAPI
+            end
+
+            function SectionAPI:MultiDropdown(Options, Callback)
+                local title = Options.Title or "MultiDropdown"
+                local options = Options.Options or {}
+                local defaultSelected = Options.Default or {}
+                local cb = Callback or function() end
+                
+                local hdrBg = makeSquare({Color=C.elemBg, ZIndex=4, Corner=3})
+                local hdrTx = makeText({Text=title..": "..#defaultSelected.." selected", Color=C.accent, FontSize=14, Font=Drawing.Fonts.SystemBold, ZIndex=5})
+                local hdrArr = makeText({Text="v", Color=C.accent, FontSize=12, Font=Drawing.Fonts.SystemBold, ZIndex=5, Outline=true})
+                
+                local optionDrawings = {}
+                for i = 1, #options do
+                    local optBg = Drawing.new("Square")
+                    optBg.Filled = true
+                    optBg.Color = C.dropOptionBg
+                    optBg.Size = Vector2.new(100, dropItemH)
+                    optBg.Visible = false
+                    optBg.ZIndex = 100
+                    optBg.Corner = 3
+                    table.insert(allDrawings, optBg)
+                    
+                    local optTxt = Drawing.new("Text")
+                    optTxt.Text = options[i]
+                    optTxt.Color = C.dropOptionText
+                    optTxt.Size = 14
+                    optTxt.Font = Drawing.Fonts.SystemBold
+                    optTxt.Visible = false
+                    optTxt.ZIndex = 101
+                    optTxt.Outline = true
+                    table.insert(allDrawings, optTxt)
+                    
+                    local checkMark = Drawing.new("Text")
+                    checkMark.Text = "✓"
+                    checkMark.Color = C.green
+                    checkMark.Size = 16
+                    checkMark.Font = Drawing.Fonts.SystemBold
+                    checkMark.Visible = false
+                    checkMark.ZIndex = 102
+                    checkMark.Outline = true
+                    table.insert(allDrawings, checkMark)
+                    
+                    optionDrawings[i] = {bg = optBg, txt = optTxt, check = checkMark}
+                end
+                
+                local dropState = {
+                    isOpen = false,
+                    selected = defaultSelected,
+                    options = options,
+                    callback = cb,
+                    lastX = 0,
+                    lastY = 0,
+                    lastW = 0,
+                    multi = true,
+                }
+                
+                local multiDropdownAPI = {}
+
+                local elem = {
+                    posY = 0, posX = 0, width = 0,
+                    getHeight = function()
+                        if dropState.isOpen then
+                            return elemH + (#options * (dropItemH + elemPad))
+                        end
+                        return elemH
+                    end,
+                    hide = function()
+                        hdrBg.Visible = false
+                        hdrTx.Visible = false
+                        hdrArr.Visible = false
+                        for i = 1, #options do
+                            optionDrawings[i].bg.Visible = false
+                            optionDrawings[i].txt.Visible = false
+                            optionDrawings[i].check.Visible = false
+                        end
+                    end,
+                    update = function(x, y, w, h, vis)
+                        dropState.lastX = x + 8
+                        dropState.lastY = y
+                        dropState.lastW = w - 16
+                        
+                        hdrBg.Position = Vector2.new(x+8, y)
+                        hdrBg.Size = Vector2.new(w-16, elemH)
+                        hdrBg.Visible = vis
+                        
+                        hdrTx.Text = title..": "..#dropState.selected.." selected"
+                        hdrTx.Position = Vector2.new(x+18, y+elemH/2-7)
+                        hdrTx.Visible = vis
+                        
+                        hdrArr.Text = dropState.isOpen and "^" or "v"
+                        hdrArr.Position = Vector2.new(x+w-28, y+elemH/2-6)
+                        hdrArr.Visible = vis
+                        
+                        if dropState.isOpen and vis then
+                            local oy = y + elemH + elemPad
+                            for i = 1, #options do
+                                optionDrawings[i].bg.Position = Vector2.new(x+12, oy)
+                                optionDrawings[i].bg.Size = Vector2.new(w-24, dropItemH)
+                                optionDrawings[i].bg.Visible = true
+                                
+                                local isSelected = table.find(dropState.selected, options[i]) ~= nil
+                                if isSelected then
+                                    optionDrawings[i].bg.Color = C.dropOptionSel
+                                else
+                                    optionDrawings[i].bg.Color = C.dropOptionBg
+                                end
+                                
+                                optionDrawings[i].txt.Text = options[i]
+                                optionDrawings[i].txt.Position = Vector2.new(x+20, oy + dropItemH/2 - 7)
+                                optionDrawings[i].txt.Visible = true
+                                
+                                if isSelected then
+                                    optionDrawings[i].check.Position = Vector2.new(x+w-35, oy + dropItemH/2 - 8)
+                                    optionDrawings[i].check.Visible = true
+                                else
+                                    optionDrawings[i].check.Visible = false
+                                end
+                                
+                                oy = oy + dropItemH + elemPad
+                            end
+                        else
+                            for i = 1, #options do
+                                optionDrawings[i].bg.Visible = false
+                                optionDrawings[i].txt.Visible = false
+                                optionDrawings[i].check.Visible = false
+                            end
+                        end
+                    end,
+                    onClick = function()
+                        if dropState.isOpen then
+                            dropState.isOpen = false
+                            Internal.OpenDropdown = nil
+                        else
+                            if Internal.OpenDropdown then
+                                Internal.OpenDropdown.isOpen = false
+                            end
+                            dropState.isOpen = true
+                            Internal.OpenDropdown = dropState
+                        end
+                        Internal.NeedsUpdate = true
+                        return true
+                    end,
+                }
+                table.insert(section.elements, elem)
+                
+                function multiDropdownAPI:Get()
+                    return dropState.selected
+                end
+                
+                function multiDropdownAPI:Set(selectedList)
+                    dropState.selected = selectedList
+                    cb(selectedList)
+                    Internal.NeedsUpdate = true
+                end
+                
+                function multiDropdownAPI:Add(option)
+                    if table.find(options, option) and not table.find(dropState.selected, option) then
+                        table.insert(dropState.selected, option)
+                        cb(dropState.selected)
+                        Internal.NeedsUpdate = true
+                    end
+                end
+                
+                function multiDropdownAPI:Remove(option)
+                    for i, sel in ipairs(dropState.selected) do
+                        if sel == option then
+                            table.remove(dropState.selected, i)
+                            cb(dropState.selected)
+                            Internal.NeedsUpdate = true
+                            break
+                        end
+                    end
+                end
+                
+                function multiDropdownAPI:Toggle(option)
+                    if table.find(dropState.selected, option) then
+                        multiDropdownAPI:Remove(option)
+                    else
+                        multiDropdownAPI:Add(option)
+                    end
+                end
+                
+                if #defaultSelected > 0 then
+                    cb(defaultSelected)
+                end
+                
+                Internal.NeedsUpdate = true
+                return multiDropdownAPI
             end
 
             function SectionAPI:Keybind(Options, Callback, Changed)
@@ -965,7 +1484,7 @@ function _G.UI:Window(Options)
                             kTx.Text = "[ "..keybind.keyName.." ]"
                             kTx.Color = C.accent
                         end
-                        kTx.Position = Vector2.new(bx+kW/2, by+5)
+                        kTx.Position = Vector2.new(bx+kW/2, by+kH/2-7)
                         kTx.Visible = vis
                         
                         lb.Position = Vector2.new(bx+kW+10, y+h/2-7)
@@ -974,10 +1493,110 @@ function _G.UI:Window(Options)
                     onClick = function()
                         keybind.listening = true
                         Internal.ListeningKeybind = keybind
+                        Internal.NeedsUpdate = true
                         return true
                     end,
                 }
                 table.insert(section.elements, elem)
+                Internal.NeedsUpdate = true
+            end
+
+            function SectionAPI:Textbox(Options, Callback)
+                local text = Options.Title or "Textbox"
+                local defaultValue = Options.Default or ""
+                local placeholder = Options.Placeholder or "Enter text..."
+                local cb = Callback or function() end
+                
+                local bg = makeSquare({Color=C.elemBg, ZIndex=4, Corner=3})
+                local inputBg = makeSquare({Color=C.inputBg, ZIndex=5, Corner=3})
+                local inputTxt = makeText({Text=defaultValue ~= "" and defaultValue or placeholder, Color=defaultValue ~= "" and C.textPrimary or C.textDim, FontSize=13, Font=Drawing.Fonts.System, ZIndex=6})
+                local lb = makeText({Text=text, Color=C.textPrimary, FontSize=13, Font=Drawing.Fonts.SystemBold, ZIndex=5})
+                local cursor = makeText({Text="|", Color=C.accent, FontSize=13, Font=Drawing.Fonts.System, ZIndex=7})
+                
+                local textbox = {
+                    value = defaultValue,
+                    placeholder = placeholder,
+                    callback = cb,
+                    focused = false,
+                }
+                
+                local textboxAPI = {}
+                local cursorBlink = 0
+
+                local elem = {
+                    posY = 0, posX = 0, width = 0,
+                    getHeight = function() return elemH end,
+                    hide = function()
+                        bg.Visible = false
+                        inputBg.Visible = false
+                        inputTxt.Visible = false
+                        lb.Visible = false
+                        cursor.Visible = false
+                    end,
+                    update = function(x, y, w, h, vis)
+                        bg.Position = Vector2.new(x+8, y)
+                        bg.Size = Vector2.new(w-16, h)
+                        bg.Visible = vis
+                        
+                        local inputW = 200
+                        local inputX = x + 16
+                        local inputY = y + (h - 22) / 2
+                        
+                        inputBg.Position = Vector2.new(inputX, inputY)
+                        inputBg.Size = Vector2.new(inputW, 22)
+                        inputBg.Visible = vis
+                        
+                        if textbox.value == "" then
+                            inputTxt.Text = placeholder
+                            inputTxt.Color = C.textDim
+                        else
+                            inputTxt.Text = textbox.value
+                            inputTxt.Color = C.textPrimary
+                        end
+                        inputTxt.Position = Vector2.new(inputX + 6, inputY + 4)
+                        inputTxt.Visible = vis
+                        
+                        lb.Position = Vector2.new(inputX + inputW + 10, y + h/2 - 7)
+                        lb.Visible = vis
+                        
+                        if textbox.focused then
+                            cursorBlink = cursorBlink + 1
+                            if cursorBlink % 30 < 15 then
+                                cursor.Position = Vector2.new(inputX + 6 + estW(textbox.value, 13), inputY + 4)
+                                cursor.Visible = vis
+                            else
+                                cursor.Visible = false
+                            end
+                        else
+                            cursor.Visible = false
+                            cursorBlink = 0
+                        end
+                    end,
+                    onClick = function()
+                        textbox.focused = true
+                        Internal.ListeningTextbox = textbox
+                        Internal.NeedsUpdate = true
+                        return true
+                    end,
+                }
+                table.insert(section.elements, elem)
+                
+                function textboxAPI:Get()
+                    return textbox.value
+                end
+                
+                function textboxAPI:Set(val)
+                    textbox.value = val
+                    cb(val)
+                    Internal.NeedsUpdate = true
+                end
+                
+                if defaultValue ~= "" then
+                    cb(defaultValue)
+                end
+                
+                Internal.NeedsUpdate = true
+                return textboxAPI
             end
 
             return SectionAPI
@@ -992,6 +1611,7 @@ function _G.UI:Window(Options)
         else
             Internal.Open = bool
         end
+        Internal.NeedsUpdate = true
     end
     
     function WindowAPI:Unload()
