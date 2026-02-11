@@ -1,3 +1,4 @@
+-- UI Library that creates global UI table
 local Luxt1 = {}
 
 -- Helper: Check if mouse is over a region
@@ -25,11 +26,12 @@ local function getKeyName(keyCode)
         [116] = "F5", [117] = "F6", [118] = "F7", [119] = "F8",
         [120] = "F9", [121] = "F10", [122] = "F11", [123] = "F12",
     }
-    return KeyNames[keyCode] or "Unknown"
+    return KeyNames[keyCode] or "Key" .. tostring(keyCode)
 end
 
-function Luxt1.CreateWindow(libName, logoId)
-    libName = libName or "LuxtLib"
+function Luxt1.Window(config)
+    local libName = config.Title or config.title or "LuxtLib"
+    local windowSize = config.Size or config.size or Vector2.new(553, 452)
     
     local Mouse = game.Players.LocalPlayer:GetMouse()
     local Players = game:GetService("Players")
@@ -48,7 +50,7 @@ function Luxt1.CreateWindow(libName, logoId)
     -- Main shadow
     local shadow = Drawing.new("Square")
     shadow.Position = basePos
-    shadow.Size = Vector2.new(609, 530)
+    shadow.Size = Vector2.new(windowSize.X + 56, windowSize.Y + 78)
     shadow.Color = Color3.fromRGB(0, 0, 0)
     shadow.Transparency = 0.8
     shadow.Filled = true
@@ -59,7 +61,7 @@ function Luxt1.CreateWindow(libName, logoId)
     -- Main frame
     local mainFrame = Drawing.new("Square")
     mainFrame.Position = basePos + Vector2.new(29, 40)
-    mainFrame.Size = Vector2.new(553, 452)
+    mainFrame.Size = windowSize
     mainFrame.Color = Color3.fromRGB(30, 30, 30)
     mainFrame.Filled = true
     mainFrame.Corner = 5
@@ -69,7 +71,7 @@ function Luxt1.CreateWindow(libName, logoId)
     -- Side heading
     local sideHeading = Drawing.new("Square")
     sideHeading.Position = basePos + Vector2.new(29, 40)
-    sideHeading.Size = Vector2.new(155, 452)
+    sideHeading.Size = Vector2.new(155, windowSize.Y)
     sideHeading.Color = Color3.fromRGB(21, 21, 21)
     sideHeading.Filled = true
     sideHeading.Corner = 5
@@ -79,7 +81,7 @@ function Luxt1.CreateWindow(libName, logoId)
     -- Side cover (removes corner on right side)
     local sideCover = Drawing.new("Square")
     sideCover.Position = sideHeading.Position + Vector2.new(141, 0)
-    sideCover.Size = Vector2.new(14, 452)
+    sideCover.Size = Vector2.new(14, windowSize.Y)
     sideCover.Color = Color3.fromRGB(21, 21, 21)
     sideCover.Filled = true
     sideCover.ZIndex = 2
@@ -109,7 +111,7 @@ function Luxt1.CreateWindow(libName, logoId)
     
     -- Close keybind
     local closeKeyBg = Drawing.new("Square")
-    closeKeyBg.Position = sideHeading.Position + Vector2.new(8, 422)
+    closeKeyBg.Position = sideHeading.Position + Vector2.new(8, windowSize.Y - 30)
     closeKeyBg.Size = Vector2.new(76, 22)
     closeKeyBg.Color = Color3.fromRGB(24, 24, 24)
     closeKeyBg.Filled = true
@@ -150,7 +152,7 @@ function Luxt1.CreateWindow(libName, logoId)
     -- Content area
     local contentArea = {
         pos = mainFrame.Position + Vector2.new(164, 11),
-        size = Vector2.new(381, 431)
+        size = Vector2.new(windowSize.X - 173, windowSize.Y - 20)
     }
     
     -- Update all positions when window moves
@@ -161,7 +163,7 @@ function Luxt1.CreateWindow(libName, logoId)
         sideCover.Position = sideHeading.Position + Vector2.new(141, 0)
         hubName.Position = sideHeading.Position + Vector2.new(45, 16)
         username.Position = sideHeading.Position + Vector2.new(45, 34)
-        closeKeyBg.Position = sideHeading.Position + Vector2.new(8, 422)
+        closeKeyBg.Position = sideHeading.Position + Vector2.new(8, windowSize.Y - 30)
         closeKeyText.Position = closeKeyBg.Position + Vector2.new(38, 11)
         closeKeyLabel.Position = closeKeyBg.Position + Vector2.new(85, 4)
         contentArea.pos = mainFrame.Position + Vector2.new(164, 11)
@@ -174,14 +176,16 @@ function Luxt1.CreateWindow(libName, logoId)
             yOff = yOff + 35
             
             -- Update tab content positions
-            tab:updatePositions()
+            if tab.updatePositions then
+                tab:updatePositions()
+            end
         end
     end
     
-    local TabHandling = {}
+    local WindowHandling = {}
     
-    function TabHandling:Tab(tabText, tabId)
-        tabText = tabText or "Tab"
+    function WindowHandling:Tab(config)
+        local tabText = config.Title or config.title or "Tab"
         
         local tab = {
             drawings = {},
@@ -220,16 +224,20 @@ function Luxt1.CreateWindow(libName, logoId)
             for _, t in ipairs(tabs) do
                 t.visible = false
                 t.text.Color = Color3.fromRGB(35, 59, 55)
-                for _, drawing in ipairs(t.contentDrawings or {}) do
-                    drawing.Visible = false
+                if t.contentDrawings then
+                    for _, drawing in ipairs(t.contentDrawings) do
+                        drawing.Visible = false
+                    end
                 end
             end
             
             -- Show this tab
             self.visible = true
             self.text.Color = Color3.fromRGB(153, 255, 238)
-            for _, drawing in ipairs(self.contentDrawings or {}) do
-                drawing.Visible = visible
+            if self.contentDrawings then
+                for _, drawing in ipairs(self.contentDrawings) do
+                    drawing.Visible = visible
+                end
             end
             currentTab = self
         end
@@ -240,18 +248,20 @@ function Luxt1.CreateWindow(libName, logoId)
             
             local yOff = 0
             for _, section in ipairs(self.sections) do
-                section:updatePositions(yOff)
-                yOff = yOff + section.totalHeight
+                if section.updatePositions then
+                    section:updatePositions(yOff)
+                    yOff = yOff + section.totalHeight + 3
+                end
             end
         end
         
         tab.contentDrawings = {}
         table.insert(tabs, tab)
         
-        local SectionHandling = {}
+        local TabHandling = {}
         
-        function SectionHandling:Section(sectionText)
-            sectionText = sectionText or "Section"
+        function TabHandling:Section(config)
+            local sectionText = config.Title or config.title or "Section"
             
             local section = {
                 drawings = {},
@@ -265,7 +275,7 @@ function Luxt1.CreateWindow(libName, logoId)
             -- Section frame
             section.frame = Drawing.new("Square")
             section.frame.Position = contentArea.pos + Vector2.new(0, tab.contentYOffset)
-            section.frame.Size = Vector2.new(381, 36)
+            section.frame.Size = Vector2.new(contentArea.size.X, 36)
             section.frame.Color = Color3.fromRGB(21, 21, 21)
             section.frame.Filled = true
             section.frame.Corner = 5
@@ -292,7 +302,7 @@ function Luxt1.CreateWindow(libName, logoId)
             -- Expand arrow
             section.arrow = Drawing.new("Text")
             section.arrow.Text = "▼"
-            section.arrow.Position = section.frame.Position + Vector2.new(355, 11)
+            section.arrow.Position = section.frame.Position + Vector2.new(contentArea.size.X - 26, 11)
             section.arrow.Size = 12
             section.arrow.Color = Color3.fromRGB(153, 255, 238)
             section.arrow.Outline = true
@@ -332,10 +342,10 @@ function Luxt1.CreateWindow(libName, logoId)
                         itemsHeight = itemsHeight + (item.height or 39)
                     end
                     self.totalHeight = self.baseHeight + itemsHeight + 3
-                    self.frame.Size = Vector2.new(381, self.totalHeight)
+                    self.frame.Size = Vector2.new(contentArea.size.X, self.totalHeight)
                 else
                     self.totalHeight = self.baseHeight
-                    self.frame.Size = Vector2.new(381, 36)
+                    self.frame.Size = Vector2.new(contentArea.size.X, 36)
                 end
                 
                 -- Update tab's total content height
@@ -345,31 +355,36 @@ function Luxt1.CreateWindow(libName, logoId)
                     tab.contentYOffset = tab.contentYOffset + sec.totalHeight + 3
                 end
                 
-                tab:updatePositions()
+                if tab.updatePositions then
+                    tab:updatePositions()
+                end
             end
             
             function section:updatePositions(startY)
                 self.yOffset = startY or self.yOffset
                 self.frame.Position = contentArea.pos + Vector2.new(0, self.yOffset)
                 self.title.Position = self.frame.Position + Vector2.new(9, 11)
-                self.arrow.Position = self.frame.Position + Vector2.new(355, 11)
+                self.arrow.Position = self.frame.Position + Vector2.new(contentArea.size.X - 26, 11)
                 
                 local itemY = 39
                 for _, item in ipairs(self.items) do
-                    item:updatePositions(itemY)
-                    itemY = itemY + (item.height or 39)
+                    if item.updatePositions then
+                        item:updatePositions(itemY)
+                        itemY = itemY + (item.height or 39)
+                    end
                 end
             end
             
             table.insert(tab.sections, section)
             
             local itemYOffset = 39
+            local itemWidth = contentArea.size.X - 16
             
-            local ItemHandling = {}
+            local SectionHandling = {}
             
-            function ItemHandling:Button(btnText, callback)
-                btnText = btnText or "Button"
-                callback = callback or function() end
+            function SectionHandling:Button(config)
+                local btnText = config.Title or config.title or config.Text or config.text or "Button"
+                local callback = config.Callback or config.callback or function() end
                 
                 local item = {
                     drawings = {},
@@ -380,7 +395,7 @@ function Luxt1.CreateWindow(libName, logoId)
                 -- Button background
                 item.bg = Drawing.new("Square")
                 item.bg.Position = section.frame.Position + Vector2.new(8, itemYOffset)
-                item.bg.Size = Vector2.new(365, 36)
+                item.bg.Size = Vector2.new(itemWidth, 36)
                 item.bg.Color = Color3.fromRGB(18, 18, 18)
                 item.bg.Filled = true
                 item.bg.Corner = 3
@@ -393,7 +408,7 @@ function Luxt1.CreateWindow(libName, logoId)
                 -- Button text
                 item.text = Drawing.new("Text")
                 item.text.Text = btnText
-                item.text.Position = item.bg.Position + Vector2.new(182.5, 18)
+                item.text.Position = item.bg.Position + Vector2.new(itemWidth/2, 18)
                 item.text.Size = 14
                 item.text.Color = Color3.fromRGB(180, 180, 180)
                 item.text.Font = Drawing.Fonts.SystemBold
@@ -405,36 +420,38 @@ function Luxt1.CreateWindow(libName, logoId)
                 table.insert(tab.contentDrawings, item.text)
                 table.insert(item.drawings, item.text)
                 
-                -- Interaction
                 item.onClick = callback
                 item.isButton = true
                 
                 function item:updatePositions(yOff)
                     self.yOffset = yOff
                     self.bg.Position = section.frame.Position + Vector2.new(8, yOff)
-                    self.text.Position = self.bg.Position + Vector2.new(182.5, 18)
+                    self.text.Position = self.bg.Position + Vector2.new(itemWidth/2, 18)
                 end
                 
                 itemYOffset = itemYOffset + 39
                 table.insert(section.items, item)
                 section:recalculateHeight()
+                
+                return item
             end
             
-            function ItemHandling:Toggle(toggleText, callback)
-                toggleText = toggleText or "Toggle"
-                callback = callback or function() end
+            function SectionHandling:Toggle(config)
+                local toggleText = config.Title or config.title or config.Text or config.text or "Toggle"
+                local callback = config.Callback or config.callback or function() end
+                local defaultState = config.Default or config.default or false
                 
                 local item = {
                     drawings = {},
                     height = 39,
                     yOffset = itemYOffset,
-                    state = false
+                    state = defaultState
                 }
                 
                 -- Toggle background
                 item.bg = Drawing.new("Square")
                 item.bg.Position = section.frame.Position + Vector2.new(8, itemYOffset)
-                item.bg.Size = Vector2.new(365, 36)
+                item.bg.Size = Vector2.new(itemWidth, 36)
                 item.bg.Color = Color3.fromRGB(18, 18, 18)
                 item.bg.Filled = true
                 item.bg.Corner = 3
@@ -448,7 +465,7 @@ function Luxt1.CreateWindow(libName, logoId)
                 item.checkbox = Drawing.new("Square")
                 item.checkbox.Position = item.bg.Position + Vector2.new(7, 8)
                 item.checkbox.Size = Vector2.new(20, 20)
-                item.checkbox.Color = Color3.fromRGB(97, 97, 97)
+                item.checkbox.Color = defaultState and Color3.fromRGB(153, 255, 238) or Color3.fromRGB(97, 97, 97)
                 item.checkbox.Filled = false
                 item.checkbox.Thickness = 1
                 item.checkbox.ZIndex = 8
@@ -464,7 +481,7 @@ function Luxt1.CreateWindow(libName, logoId)
                 item.checkFill.Color = Color3.fromRGB(153, 255, 238)
                 item.checkFill.Filled = true
                 item.checkFill.ZIndex = 8
-                item.checkFill.Visible = false
+                item.checkFill.Visible = defaultState
                 table.insert(allDrawings, item.checkFill)
                 table.insert(tab.contentDrawings, item.checkFill)
                 table.insert(item.drawings, item.checkFill)
@@ -474,7 +491,7 @@ function Luxt1.CreateWindow(libName, logoId)
                 item.text.Text = toggleText
                 item.text.Position = item.bg.Position + Vector2.new(38, 11)
                 item.text.Size = 14
-                item.text.Color = Color3.fromRGB(97, 97, 97)
+                item.text.Color = defaultState and Color3.fromRGB(153, 255, 238) or Color3.fromRGB(97, 97, 97)
                 item.text.Font = Drawing.Fonts.SystemBold
                 item.text.Outline = true
                 item.text.ZIndex = 8
@@ -483,13 +500,12 @@ function Luxt1.CreateWindow(libName, logoId)
                 table.insert(tab.contentDrawings, item.text)
                 table.insert(item.drawings, item.text)
                 
-                -- Interaction
                 item.isToggle = true
                 item.onToggle = callback
                 
                 function item:toggle()
                     self.state = not self.state
-                    self.checkFill.Visible = self.state and visible and tab.visible
+                    self.checkFill.Visible = self.state and visible and tab.visible and section.expanded
                     if self.state then
                         self.text.Color = Color3.fromRGB(153, 255, 238)
                         self.checkbox.Color = Color3.fromRGB(153, 255, 238)
@@ -511,10 +527,17 @@ function Luxt1.CreateWindow(libName, logoId)
                 itemYOffset = itemYOffset + 39
                 table.insert(section.items, item)
                 section:recalculateHeight()
+                
+                -- Call callback with initial state
+                if defaultState then
+                    callback(defaultState)
+                end
+                
+                return item
             end
             
-            function ItemHandling:Label(labelText)
-                labelText = labelText or "Label"
+            function SectionHandling:Label(config)
+                local labelText = config.Title or config.title or config.Text or config.text or "Label"
                 
                 local item = {
                     drawings = {},
@@ -525,7 +548,7 @@ function Luxt1.CreateWindow(libName, logoId)
                 -- Label background
                 item.bg = Drawing.new("Square")
                 item.bg.Position = section.frame.Position + Vector2.new(8, itemYOffset)
-                item.bg.Size = Vector2.new(365, 36)
+                item.bg.Size = Vector2.new(itemWidth, 36)
                 item.bg.Color = Color3.fromRGB(18, 18, 18)
                 item.bg.Filled = true
                 item.bg.Corner = 3
@@ -538,7 +561,7 @@ function Luxt1.CreateWindow(libName, logoId)
                 -- Label text
                 item.text = Drawing.new("Text")
                 item.text.Text = labelText
-                item.text.Position = item.bg.Position + Vector2.new(182.5, 18)
+                item.text.Position = item.bg.Position + Vector2.new(itemWidth/2, 18)
                 item.text.Size = 14
                 item.text.Color = Color3.fromRGB(255, 255, 255)
                 item.text.Font = Drawing.Fonts.SystemBold
@@ -553,25 +576,28 @@ function Luxt1.CreateWindow(libName, logoId)
                 function item:updatePositions(yOff)
                     self.yOffset = yOff
                     self.bg.Position = section.frame.Position + Vector2.new(8, yOff)
-                    self.text.Position = self.bg.Position + Vector2.new(182.5, 18)
+                    self.text.Position = self.bg.Position + Vector2.new(itemWidth/2, 18)
                 end
                 
                 itemYOffset = itemYOffset + 39
                 table.insert(section.items, item)
                 section:recalculateHeight()
+                
+                return item
             end
             
-            function ItemHandling:Slider(sliderText, minVal, maxVal, callback)
-                sliderText = sliderText or "Slider"
-                minVal = minVal or 0
-                maxVal = maxVal or 100
-                callback = callback or function() end
+            function SectionHandling:Slider(config)
+                local sliderText = config.Title or config.title or "Slider"
+                local minVal = config.Min or config.min or 0
+                local maxVal = config.Max or config.max or 100
+                local defaultVal = config.Default or config.default or minVal
+                local callback = config.Callback or config.callback or function() end
                 
                 local item = {
                     drawings = {},
                     height = 39,
                     yOffset = itemYOffset,
-                    value = minVal,
+                    value = defaultVal,
                     min = minVal,
                     max = maxVal,
                     isDragging = false
@@ -580,7 +606,7 @@ function Luxt1.CreateWindow(libName, logoId)
                 -- Slider background
                 item.bg = Drawing.new("Square")
                 item.bg.Position = section.frame.Position + Vector2.new(8, itemYOffset)
-                item.bg.Size = Vector2.new(365, 36)
+                item.bg.Size = Vector2.new(itemWidth, 36)
                 item.bg.Color = Color3.fromRGB(18, 18, 18)
                 item.bg.Filled = true
                 item.bg.Corner = 3
@@ -596,6 +622,7 @@ function Luxt1.CreateWindow(libName, logoId)
                 item.track.Size = Vector2.new(150, 10)
                 item.track.Color = Color3.fromRGB(44, 44, 44)
                 item.track.Filled = true
+                item.track.Corner = 5
                 item.track.ZIndex = 8
                 item.track.Visible = false
                 table.insert(allDrawings, item.track)
@@ -603,8 +630,9 @@ function Luxt1.CreateWindow(libName, logoId)
                 table.insert(item.drawings, item.track)
                 
                 -- Slider knob
+                local initialPercent = (defaultVal - minVal) / (maxVal - minVal)
                 item.knob = Drawing.new("Square")
-                item.knob.Position = item.track.Position + Vector2.new(-5, -5)
+                item.knob.Position = item.track.Position + Vector2.new(150 * initialPercent - 10, -5)
                 item.knob.Size = Vector2.new(20, 20)
                 item.knob.Color = Color3.fromRGB(153, 255, 238)
                 item.knob.Filled = true
@@ -667,12 +695,18 @@ function Luxt1.CreateWindow(libName, logoId)
                 itemYOffset = itemYOffset + 39
                 table.insert(section.items, item)
                 section:recalculateHeight()
+                
+                -- Call callback with initial value
+                callback(defaultVal)
+                
+                return item
             end
             
-            function ItemHandling:Dropdown(dropText, options, callback)
-                dropText = dropText or "Dropdown"
-                options = options or {"Option 1", "Option 2"}
-                callback = callback or function() end
+            function SectionHandling:Dropdown(config)
+                local dropText = config.Title or config.title or "Dropdown"
+                local options = config.Options or config.options or {"Option 1", "Option 2"}
+                local callback = config.Callback or config.callback or function() end
+                local defaultOption = config.Default or config.default or options[1]
                 
                 local item = {
                     drawings = {},
@@ -680,14 +714,14 @@ function Luxt1.CreateWindow(libName, logoId)
                     yOffset = itemYOffset,
                     isOpen = false,
                     options = options,
-                    selected = options[1] or "None",
+                    selected = defaultOption or "None",
                     optionDrawings = {}
                 }
                 
                 -- Dropdown background
                 item.bg = Drawing.new("Square")
                 item.bg.Position = section.frame.Position + Vector2.new(8, itemYOffset)
-                item.bg.Size = Vector2.new(365, 36)
+                item.bg.Size = Vector2.new(itemWidth, 36)
                 item.bg.Color = Color3.fromRGB(18, 18, 18)
                 item.bg.Filled = true
                 item.bg.Corner = 3
@@ -783,8 +817,8 @@ function Luxt1.CreateWindow(libName, logoId)
                 function item:toggle()
                     self.isOpen = not self.isOpen
                     for _, opt in ipairs(self.optionDrawings) do
-                        opt.bg.Visible = self.isOpen and visible and tab.visible
-                        opt.text.Visible = self.isOpen and visible and tab.visible
+                        opt.bg.Visible = self.isOpen and visible and tab.visible and section.expanded
+                        opt.text.Visible = self.isOpen and visible and tab.visible and section.expanded
                     end
                 end
                 
@@ -812,12 +846,19 @@ function Luxt1.CreateWindow(libName, logoId)
                 itemYOffset = itemYOffset + 39
                 table.insert(section.items, item)
                 section:recalculateHeight()
+                
+                -- Call callback with default
+                if defaultOption then
+                    callback(defaultOption)
+                end
+                
+                return item
             end
             
-            function ItemHandling:KeyBind(keyText, defaultKey, callback)
-                keyText = keyText or "KeyBind"
-                defaultKey = defaultKey or 45 -- Insert
-                callback = callback or function() end
+            function SectionHandling:Keybind(config)
+                local keyText = config.Title or config.title or "KeyBind"
+                local defaultKey = config.Default or config.default or 45
+                local callback = config.Callback or config.callback or function() end
                 
                 local item = {
                     drawings = {},
@@ -830,7 +871,7 @@ function Luxt1.CreateWindow(libName, logoId)
                 -- KeyBind background
                 item.bg = Drawing.new("Square")
                 item.bg.Position = section.frame.Position + Vector2.new(8, itemYOffset)
-                item.bg.Size = Vector2.new(365, 36)
+                item.bg.Size = Vector2.new(itemWidth, 36)
                 item.bg.Color = Color3.fromRGB(18, 18, 18)
                 item.bg.Filled = true
                 item.bg.Corner = 3
@@ -907,21 +948,14 @@ function Luxt1.CreateWindow(libName, logoId)
                 itemYOffset = itemYOffset + 39
                 table.insert(section.items, item)
                 section:recalculateHeight()
+                
+                return item
             end
             
-            function ItemHandling:TextBox(boxText, placeholder, callback)
-                -- Simplified implementation
-                ItemHandling:Label(boxText .. ": " .. (placeholder or ""))
-            end
-            
-            function ItemHandling:Credit(creditText)
-                ItemHandling:Label(creditText)
-            end
-            
-            return ItemHandling
+            return SectionHandling
         end
         
-        return SectionHandling
+        return TabHandling
     end
     
     -- Main input loop
@@ -962,7 +996,7 @@ function Luxt1.CreateWindow(libName, logoId)
                         closeKeyText.Color = Color3.fromRGB(255, 255, 0)
                     end
                     
-                    -- Check if dragging window (click on side heading)
+                    -- Check if dragging window
                     if isMouseOver(sideHeading.Position, Vector2.new(sideHeading.Size.X, 40), mPos) then
                         dragging = true
                         dragStart = mPos
@@ -979,7 +1013,7 @@ function Luxt1.CreateWindow(libName, logoId)
                     -- Check current tab sections and items
                     if currentTab then
                         for _, section in ipairs(currentTab.sections) do
-                            -- Check section header for expand/collapse
+                            -- Check section header
                             if isMouseOver(section.frame.Position, Vector2.new(section.frame.Size.X, 36), mPos) then
                                 section:toggle()
                             end
@@ -1058,6 +1092,9 @@ function Luxt1.CreateWindow(libName, logoId)
                                         break
                                     end
                                 end
+                            elseif item.isKeybind and iskeypressed(item.key) then
+                                item.onKey()
+                                wait(0.2)
                             end
                         end
                     end
@@ -1068,7 +1105,11 @@ function Luxt1.CreateWindow(libName, logoId)
         end
     end)
     
-    return TabHandling
+    return WindowHandling
 end
 
-return Luxt1
+-- Create global UI table
+_G.UI = Luxt1
+_G.Flags = {} -- Placeholder for flags system
+
+notify("UI Library Loaded!", "Success", 2)
