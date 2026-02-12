@@ -198,7 +198,7 @@ function _G.UI:Window(Options)
 	local sideBg = makeSquare({Color=C.side, ZIndex=2, Corner=5})
 	local sideCover = makeSquare({Color=C.side, ZIndex=2})
 	local divLine = makeLine({Color=C.accentDark, ZIndex=3, Thickness=1})
-	local hubText = makeText({Text=libName, Color=C.accent, FontSize=14, Font=Drawing.Fonts.SystemBold, ZIndex=3})
+	local hubText = makeText({Text=libName, Color=C.accent, FontSize=18, Font=Drawing.Fonts.SystemBold, ZIndex=3})
 	local userText = makeText({Text=LocalPlayer.Name, Color=C.accentBright, FontSize=12, Font=Drawing.Fonts.SystemBold, ZIndex=3})
 
 	local togBtnW = 76
