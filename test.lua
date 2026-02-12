@@ -198,8 +198,8 @@ function _G.UI:Window(Options)
 	local sideBg = makeSquare({Color=C.side, ZIndex=2, Corner=5})
 	local sideCover = makeSquare({Color=C.side, ZIndex=2})
 	local divLine = makeLine({Color=C.accentDark, ZIndex=3, Thickness=1})
-	local hubText = makeText({Text=libName, Color=C.accent, FontSize=18, Font=Drawing.Fonts.SystemBold, ZIndex=3})
-	local userText = makeText({Text=LocalPlayer.Name, Color=C.accentBright, FontSize=12, Font=Drawing.Fonts.SystemBold, ZIndex=3})
+	local hubText = makeText({Text=libName, Color=C.accent, FontSize=24, Font=Drawing.Fonts.SystemBold, ZIndex=3})
+	local userText = makeText({Text=LocalPlayer.Name, Color=C.accentBright, FontSize=10, Font=Drawing.Fonts.SystemBold, ZIndex=3})
 
 	local togBtnW = 76
 	local togBtnH = 22
@@ -219,7 +219,7 @@ function _G.UI:Window(Options)
 
 		shadowBg.Position = Vector2.new(wx-4, wy-4)
 		shadowBg.Size = Vector2.new(windowW+8, windowH+8)
-		shadowBg.Visible = true
+		shadowBg.Visible = false
 
 		mainBg.Position = Vector2.new(wx, wy)
 		mainBg.Size = Vector2.new(windowW, windowH)
@@ -240,7 +240,7 @@ function _G.UI:Window(Options)
 		hubText.Position = Vector2.new(wx+15, wy+12)
 		hubText.Visible = true
 
-		userText.Position = Vector2.new(wx+15, wy+32)
+		userText.Position = Vector2.new(wx+15, wy+48)
 		userText.Visible = true
 
 		local toggleYPercent = 0.935
@@ -827,7 +827,7 @@ function _G.UI:Window(Options)
 				local trackBg = makeSquare({Color=C.sliderTrack, ZIndex=5, Corner=3})
 				local fill = makeSquare({Color=C.accent, ZIndex=6, Corner=3})
 				local lb = makeText({Text=text, Color=C.textPrimary, FontSize=14, Font=Drawing.Fonts.SystemBold, ZIndex=5})
-				local valTxt = makeText({Text=tostring(defaultVal)..suffix, Color=C.accent, FontSize=12, Font=Drawing.Fonts.SystemBold, ZIndex=5})
+				local valTxt = makeText({Text=tostring(defaultVal)..suffix, Color=C.accent, FontSize=16, Font=Drawing.Fonts.SystemBold, ZIndex=5})
 
 				local trackW = 150
 				local trackH = 6
@@ -1386,3 +1386,4 @@ function _G.UI:Window(Options)
 
 	return WindowAPI
 end
+
